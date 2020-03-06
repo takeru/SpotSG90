@@ -268,7 +268,7 @@ void loop()
   }
 
   static unsigned long prev_imu_ms = 0;
-  if(0<ws.count() && prev_imu_ms+100<ms){
+  if(false && 0<ws.count() && prev_imu_ms+100<ms){
     static float accX  = 0.0F;
     static float accY  = 0.0F;
     static float accZ  = 0.0F;

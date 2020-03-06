@@ -27,7 +27,7 @@ function init(){
   });
   socket.addEventListener('message', function (event) {
     var obj = JSON.parse(event.data);
-    console.log('message=', obj);
+    //console.log('message=', obj);
     if(obj.ahrs){
       pushData(chart, obj);
     }
@@ -55,7 +55,7 @@ function init(){
   setInterval(function(){ $(".led-button[v=toggle]").click(); }, 500);
 
   $("button#send").click(()=>{
-    servo_ctrl(parseInt($("#servo_number").val()), parseInt($("#pulse_width").val()));
+    set_servo_pulse_width(parseInt($("#servo_number").val()), parseInt($("#pulse_width").val()));
   });
 
   $("button.sleep").click((function(){
@@ -68,13 +68,13 @@ function init(){
 
   $("button.pulse_width").click(function(){
     if($(this).attr("delta")){
-      servo_ctrl(
+      set_servo_pulse_width(
         parseInt($("#servo_number").val()),
         parseInt($("#pulse_width").val()) + parseInt($(this).attr("delta"))
       );
     }else
     if($(this).attr("pulse_width")){
-      servo_ctrl(
+      set_servo_pulse_width(
         parseInt($("#servo_number").val()),
         parseInt($(this).attr("pulse_width"))
       );
@@ -87,33 +87,46 @@ function init(){
     $("#pulse_width").val(parseInt(v));
   });
 
-  $("button.legs").click(function(){
+  $("button.positions").click(function(){
+    var v = $(this).attr("v");
+    v.split('|').forEach(function(s){
+      var leg_name, xyz, x, y, z;
+      [leg_name, xyz] = s.split("=").map(function(_){ return _.trim(); });
+      [x, y, z] = xyz.split(',').map(function(_){ return parseInt(_.trim()); });
+      var leg_number = {A:0,B:1,C:2,D:3}[leg_name];
+      set_leg_position(leg_number, x, y, z);
+    });
+  });
+
+  $("button.angles").click(function(){
     var v = $(this).attr("v");
     v.split('|').forEach(function(s){
       var leg_name, angles, a1, a2, a3;
       [leg_name, angles] = s.split("=").map(function(x){ return x.trim(); });
       [a1,a2,a3] = angles.split(',').map(function(x){ return parseInt(x.trim()); });
       var leg_number = {A:0,B:1,C:2,D:3}[leg_name];
-      leg_ctrl(leg_number, a1, a2, a3);
+      set_leg_angles(leg_number, a1, a2, a3);
     });
   });
-  // var step = 0;
-  // setInterval(function(){
-  //   switch(step){
-  //     case 0: $(".legs.standup").click(); break;
-  //     case 1: $(".legs.a").click(); break;
-  //     case 2: $(".legs.standup").click(); break;
-  //     case 3: $(".legs.b").click(); break;
-  //   }
-  //   step = (step+1) % 4;
-  // }, 500);
+
+  var t = 0;
+  setInterval(function(){
+    for(var leg_number=0; leg_number<4; leg_number++){
+      var x = 20*Math.sin(t*Math.PI/180);
+      var y = 20*Math.cos(t*Math.PI/180);
+      //if(leg_number<=1){ x = -x; }
+      if(leg_number%2==0){ y = -y; }
+      set_leg_position(leg_number, x, y, -90);
+    }
+    t+=10;
+  }, 200);
 
   $("button.servos").click(function(){
     var v = $(this).attr("v");
     v.split(',').forEach(function(s){
       var servo_number, pulse_width;
       [servo_number, pulse_width] = s.split("=").map(function(x){ return parseInt(x.trim()); });
-      servo_ctrl(servo_number, pulse_width);
+      set_servo_pulse_width(servo_number, pulse_width);
     });
   });
 
@@ -175,7 +188,7 @@ function pushData(chart, d){
   });
 }
 
-function servo_ctrl(servo_number, pulse_width){
+function set_servo_pulse_width(servo_number, pulse_width){
   socket.send(JSON.stringify({
     request: "servo",
     data: {
@@ -185,7 +198,7 @@ function servo_ctrl(servo_number, pulse_width){
   }));
 }
 
-function leg_ctrl(leg_number, angle1, angle2, angle3){
+function set_leg_angles(leg_number, angle1, angle2, angle3){
   socket.send(JSON.stringify({
     request: "leg",
     data:{
@@ -195,6 +208,34 @@ function leg_ctrl(leg_number, angle1, angle2, angle3){
       angle3: angle3
     }
   }));
+}
+
+function normalize_angle_range(a){
+  if(a<-180){ return a+360; }
+  if(180<a ){ return a-360; }
+  return a;
+}
+
+function set_leg_position(leg_number, x, y, z){
+  var l1 = 43;
+  var l2 = 57;
+  var angle1 = Math.atan(y/z)*180/Math.PI;
+  var z2 = -Math.sqrt(z*z+y*y);
+  var t = calcIK(-1, x, z2, l1, l2);
+  var angle2 = normalize_angle_range(-(t.theta1*180/Math.PI)-90);
+  var angle3 = normalize_angle_range(-(t.theta2*180/Math.PI)+90);
+  set_leg_angles(leg_number, angle1, angle2, angle3);
+}
+
+function calcIK(sign, x, y, l1, l2){
+  if(sign!=-1 && sign!=1){ sign=1; }
+	var t1 = sign*Math.acos((x*x+y*y+l1*l1-l2*l2)/(2*l1*Math.sqrt(x*x+y*y)))+Math.atan(y/x);
+  if(x<0){ t1+=Math.PI; }
+	var t2 = Math.atan((y-l1*Math.sin(t1))/(x-l1*Math.cos(t1)))-t1;
+  if(t1 && t2){
+    return {theta1: t1, theta2: t2};
+  }
+  return null;
 }
 
 function calibration(){
@@ -315,34 +356,42 @@ function calibration(){
     <button class="calibration">Calibration</button>
   </div>
   <div>
-    <button class="legs" v="A=0,0,0">Legs:A-0-0-0</button>
-    <button class="legs" v="A=20,45,0">Legs:A-20-45-0</button>
+    <button class="angles" v="A=0,0,0">Angles:A-0-0-0</button>
+    <button class="angles" v="A=20,45,0">Angles:A-20-45-0</button>
   </div>
   <div>
-    <button class="legs" v="B=0,0,0">Legs:B-0-0-0</button>
-    <button class="legs" v="B=20,45,0">Legs:B-20-45-0</button>
+    <button class="angles" v="B=0,0,0">Angles:B-0-0-0</button>
+    <button class="angles" v="B=20,45,0">Angles:B-20-45-0</button>
   </div>
   <div>
-    <button class="legs" v="C=0,0,0">Legs:C-0-0-0</button>
-    <button class="legs" v="C=20,45,0">Legs:C-20-45-0</button>
+    <button class="angles" v="C=0,0,0">Angles:C-0-0-0</button>
+    <button class="angles" v="C=20,45,0">Angles:C-20-45-0</button>
   </div>
   <div>
-    <button class="legs" v="D=0,0,0">Legs:D-0-0-0</button>
-    <button class="legs" v="D=20,45,0">Legs:D-20-45-0</button>
+    <button class="angles" v="D=0,0,0">Angles:D-0-0-0</button>
+    <button class="angles" v="D=20,45,0">Angles:D-20-45-0</button>
   </div>
 -->
+  <div>
+    Positions:
+    <button class="positions" v="A=0,0,-50|B=0,0,-50|C=0,0,-50|D=0,0,-50">-50</button>
+    <button class="positions" v="A=0,0,-60|B=0,0,-60|C=0,0,-60|D=0,0,-60">-60</button>
+    <button class="positions" v="A=0,0,-70|B=0,0,-70|C=0,0,-70|D=0,0,-70">-70</button>
+    <button class="positions" v="A=0,0,-80|B=0,0,-80|C=0,0,-80|D=0,0,-80">-80</button>
+    <button class="positions" v="A=0,0,-90|B=0,0,-90|C=0,0,-90|D=0,0,-90">-90</button>
+  </div>
 
   <div>
-    Legs:
-    <button class="legs" v="A=0,0,0|B=0,0,0|C=0,0,0|D=0,0,0">Sit</button>
-    <button class="legs" v="A=20,45,-20|B=20,45,-20|C=10,30,45|D=10,30,45">HeadDown</button>
-    <button class="legs" v="A=20,45,0|B=20,45,0|C=20,45,0|D=20,45,0">Low</button>
-    <button class="legs" v="A=15,40,20|B=15,40,20|C=15,40,20|D=15,40,20">Mid</button>
-    <button class="legs" v="A=10,30,45|B=10,30,45|C=10,30,45|D=10,30,45">High</button>
-    <button class="legs" v="A=0,20,80|B=0,20,80|C=0,0,30|D=0,0,30">HeadUp</button>
-    <button class="legs standup" v="A=0,30,45|B=0,30,45|C=0,30,45|D=0,30,45">StandUp</button>
-    <button class="legs a" v="A=0,60, 0|B=0,30,45|C=0,30,45|D=0,60, 0">A</button>
-    <button class="legs b" v="A=0,30,45|B=0,60, 0|C=0,60, 0|D=0,30,45">B</button>
+    Angles:
+    <button class="angles" v="A=0,0,0|B=0,0,0|C=0,0,0|D=0,0,0">Sit</button>
+    <button class="angles" v="A=20,45,-20|B=20,45,-20|C=10,30,45|D=10,30,45">HeadDown</button>
+    <button class="angles" v="A=20,45,0|B=20,45,0|C=20,45,0|D=20,45,0">Low</button>
+    <button class="angles" v="A=15,40,20|B=15,40,20|C=15,40,20|D=15,40,20">Mid</button>
+    <button class="angles" v="A=10,30,45|B=10,30,45|C=10,30,45|D=10,30,45">High</button>
+    <button class="angles" v="A=0,20,80|B=0,20,80|C=0,0,30|D=0,0,30">HeadUp</button>
+    <button class="angles standup" v="A=0,30,45|B=0,30,45|C=0,30,45|D=0,30,45">StandUp</button>
+    <button class="angles a" v="A=0,60, 0|B=0,30,45|C=0,30,45|D=0,60, 0">A</button>
+    <button class="angles b" v="A=0,30,45|B=0,60, 0|C=0,60, 0|D=0,30,45">B</button>
   </div>
   <div>
     Servos:
