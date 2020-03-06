@@ -42,11 +42,17 @@ function init(){
   socket.addEventListener('error', function (event) {
     console.log('error');
   });
+
   $("button.led-button").click(function(){
     var v = $(this).attr("v");
-    console.log("led: " + v);
-    socket.send(JSON.stringify({"led": v}));
+    socket.send(JSON.stringify({
+      "request": "led",
+      "data":{
+        "action": v
+      }
+    }));
   });
+  setInterval(function(){ $(".led-button[v=toggle]").click(); }, 500);
 
   $("button#send").click(()=>{
     servo_ctrl(parseInt($("#servo_number").val()), parseInt($("#pulse_width").val()));
@@ -91,6 +97,16 @@ function init(){
       leg_ctrl(leg_number, a1, a2, a3);
     });
   });
+  // var step = 0;
+  // setInterval(function(){
+  //   switch(step){
+  //     case 0: $(".legs.standup").click(); break;
+  //     case 1: $(".legs.a").click(); break;
+  //     case 2: $(".legs.standup").click(); break;
+  //     case 3: $(".legs.b").click(); break;
+  //   }
+  //   step = (step+1) % 4;
+  // }, 500);
 
   $("button.servos").click(function(){
     var v = $(this).attr("v");
@@ -319,9 +335,14 @@ function calibration(){
   <div>
     Legs:
     <button class="legs" v="A=0,0,0|B=0,0,0|C=0,0,0|D=0,0,0">Sit</button>
+    <button class="legs" v="A=20,45,-20|B=20,45,-20|C=10,30,45|D=10,30,45">HeadDown</button>
     <button class="legs" v="A=20,45,0|B=20,45,0|C=20,45,0|D=20,45,0">Low</button>
     <button class="legs" v="A=15,40,20|B=15,40,20|C=15,40,20|D=15,40,20">Mid</button>
     <button class="legs" v="A=10,30,45|B=10,30,45|C=10,30,45|D=10,30,45">High</button>
+    <button class="legs" v="A=0,20,80|B=0,20,80|C=0,0,30|D=0,0,30">HeadUp</button>
+    <button class="legs standup" v="A=0,30,45|B=0,30,45|C=0,30,45|D=0,30,45">StandUp</button>
+    <button class="legs a" v="A=0,60, 0|B=0,30,45|C=0,30,45|D=0,60, 0">A</button>
+    <button class="legs b" v="A=0,30,45|B=0,60, 0|C=0,60, 0|D=0,30,45">B</button>
   </div>
   <div>
     Servos:

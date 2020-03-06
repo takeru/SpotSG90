@@ -28,21 +28,21 @@ void notFound(AsyncWebServerRequest *request) {
 
 void handleJsonRequest(JsonDocument& req, JsonDocument& resp)
 {
-  if(req["led"]=="on"){
-    digitalWrite(LED_BUILTIN, LOW);
-    resp["led"] = digitalRead(LED_BUILTIN);
-    resp["result"] = "OK";
-  }
-  if(req["led"]=="off"){
-    digitalWrite(LED_BUILTIN, HIGH);
-    resp["led"] = digitalRead(LED_BUILTIN);
-    resp["result"] = "OK";
-  }
-  if(req["led"]=="toggle"){
-    int led = digitalRead(LED_BUILTIN);
-    digitalWrite(LED_BUILTIN, led==HIGH ? LOW : HIGH);
-    resp["led"] = digitalRead(LED_BUILTIN);
-    resp["result"] = "OK";
+
+  if(req["request"]=="led"){
+    if(req["data"]["action"]=="on"){
+      digitalWrite(LED_BUILTIN, LOW);
+      resp["led"] = digitalRead(LED_BUILTIN);
+    }
+    if(req["data"]["action"]=="off"){
+      digitalWrite(LED_BUILTIN, HIGH);
+      resp["led"] = digitalRead(LED_BUILTIN);
+    }
+    if(req["data"]["action"]=="toggle"){
+      int led = digitalRead(LED_BUILTIN);
+      digitalWrite(LED_BUILTIN, led==HIGH ? LOW : HIGH);
+      resp["led"] = digitalRead(LED_BUILTIN);
+    }
   }
   if(req["request"]=="servo"){
     int servo_number = req["data"]["servo_number"];
