@@ -1,0 +1,375 @@
+<html>
+<head>
+<script src="https://code.jquery.com/jquery-3.4.1.min.js"
+  integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+  crossorigin="anonymous">
+</script>
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.15/c3.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.15.0/d3.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.15/c3.js"></script>
+
+<script>
+var socket = null;
+function init(){
+  var chart = genChart();
+  var ws_url = ""
+  if(window.location.protocol=="file:"){
+    ws_url = 'ws://192.168.0.131/ws';
+  }else{
+    ws_url = 'ws://' + window.location.host + ':' + window.location.port + '/ws';
+  }
+
+  socket = new WebSocket(ws_url);
+  socket.addEventListener('open', function (event) {
+    socket.send(JSON.stringify({"msg": "hello"}));
+    calibration();
+  });
+  socket.addEventListener('message', function (event) {
+    var obj = JSON.parse(event.data);
+    console.log('message=', obj);
+    if(obj.ahrs){
+      pushData(chart, obj);
+    }
+    if(obj.response=="servo"){
+      $("#pulse_width").val(obj.data.pulse_width);
+      $("option.servo_number[value="+obj.data.servo_number+"]").attr("v", obj.data.pulse_width);
+    }
+  });
+  socket.addEventListener('close', function (event) {
+    console.log('close');
+  });
+  socket.addEventListener('error', function (event) {
+    console.log('error');
+  });
+  $("button.led-button").click(function(){
+    var v = $(this).attr("v");
+    console.log("led: " + v);
+    socket.send(JSON.stringify({"led": v}));
+  });
+
+  $("button#send").click(()=>{
+    servo_ctrl(parseInt($("#servo_number").val()), parseInt($("#pulse_width").val()));
+  });
+
+  $("button.sleep").click((function(){
+    var v = $(this).attr("v");
+    socket.send(JSON.stringify({
+      request: "sleep",
+      data: {sleep: v}
+    }));
+  }));
+
+  $("button.pulse_width").click(function(){
+    if($(this).attr("delta")){
+      servo_ctrl(
+        parseInt($("#servo_number").val()),
+        parseInt($("#pulse_width").val()) + parseInt($(this).attr("delta"))
+      );
+    }else
+    if($(this).attr("pulse_width")){
+      servo_ctrl(
+        parseInt($("#servo_number").val()),
+        parseInt($(this).attr("pulse_width"))
+      );
+    }
+  });
+
+  $("select#servo_number").change(function(){
+    var servo_number = $(this).val();
+    var v = $("option.servo_number[value="+servo_number+"]").attr("v");
+    $("#pulse_width").val(parseInt(v));
+  });
+
+  $("button.legs").click(function(){
+    var v = $(this).attr("v");
+    v.split('|').forEach(function(s){
+      var leg_name, angles, a1, a2, a3;
+      [leg_name, angles] = s.split("=").map(function(x){ return x.trim(); });
+      [a1,a2,a3] = angles.split(',').map(function(x){ return parseInt(x.trim()); });
+      var leg_number = {A:0,B:1,C:2,D:3}[leg_name];
+      leg_ctrl(leg_number, a1, a2, a3);
+    });
+  });
+
+  $("button.servos").click(function(){
+    var v = $(this).attr("v");
+    v.split(',').forEach(function(s){
+      var servo_number, pulse_width;
+      [servo_number, pulse_width] = s.split("=").map(function(x){ return parseInt(x.trim()); });
+      servo_ctrl(servo_number, pulse_width);
+    });
+  });
+
+  $("button.calibration").click(function(){
+    calibration();
+  });
+}
+$(init);
+
+var data = {
+  x: ['ms'],
+  p: ['pitch'],
+  r: ['roll'],
+  y: ['yaw']
+}
+
+function genChart(){
+  var chart = c3.generate({
+    bindto: '#chart',
+    data: {
+      x: "ms",
+      columns: [
+      ],
+    },
+    axis: {
+      y: {
+        max:  45,
+        min: -45
+      }
+    },
+    transition: {
+      duration: 0
+    }
+  });
+  return chart;
+}
+
+function pushData(chart, d){
+  data.x.push(d.ms);
+  data.p.push(d.ahrs.pitch);
+  data.r.push(d.ahrs.roll);
+  data.y.push(d.ahrs.yaw);
+  var max = 50;
+  if(max+1<data.x.length){
+    data.x.splice(1,1);
+    data.p.splice(1,1);
+    data.r.splice(1,1);
+    data.y.splice(1,1);
+  }
+  var ms = data.x;
+  chart.load({
+    x: "ms",
+    columns: [
+      ms,
+      data.p,
+      data.r,
+      data.y
+    ]
+  });
+}
+
+function servo_ctrl(servo_number, pulse_width){
+  socket.send(JSON.stringify({
+    request: "servo",
+    data: {
+      servo_number: servo_number,
+      pulse_width: pulse_width
+    }
+  }));
+}
+
+function leg_ctrl(leg_number, angle1, angle2, angle3){
+  socket.send(JSON.stringify({
+    request: "leg",
+    data:{
+      leg_number: leg_number,
+      angle1: angle1,
+      angle2: angle2,
+      angle3: angle3
+    }
+  }));
+}
+
+function calibration(){
+  var calibration_data = [
+    {
+      servo_number:  0, // A-1
+      angle0:        0, pulse_width0: 1575,
+      angle1:       45, pulse_width1: 2075,
+      angle_min:   -18,
+      angle_max:    45
+    },
+    {
+      servo_number:  1, // A-2
+      angle0:        0, pulse_width0: 1500,
+      angle1:       90, pulse_width1: 2500,
+      angle_min:    -9,
+      angle_max:    90
+    },
+    {
+      servo_number:  2, // A-3
+      angle0:        0, pulse_width0: 1500,
+      angle1:       81, pulse_width1: 2400,
+      angle_min:   -45,
+      angle_max:    90
+    },
+    //-------------------------------------
+    {
+      servo_number:  3, // B-1
+      angle0:        0, pulse_width0: 1430,
+      angle1:       45, pulse_width1:  930,
+      angle_min:   -18,
+      angle_max:    45
+    },
+    {
+      servo_number:  4, // B-2
+      angle0:        0, pulse_width0: 1440,
+      angle1:       90, pulse_width1:  440,
+      angle_min:    -9,
+      angle_max:    81
+    },
+    {
+      servo_number:  5, // B-3
+      angle0:        0, pulse_width0: 1575,
+      angle1:       90, pulse_width1:  575,
+      angle_min:   -45,
+      angle_max:    90
+    },
+    //-------------------------------------
+    {
+      servo_number:  6, // C-1
+      angle0:        0, pulse_width0: 1470,
+      angle1:       45, pulse_width1: 1970,
+      angle_min:   -18,
+      angle_max:    45
+    },
+    {
+      servo_number:  7, // C-2
+      angle0:        0, pulse_width0: 1560,
+      angle1:       90, pulse_width1: 2560,
+      angle_min:    -9,
+      angle_max:    90
+    },
+    {
+      servo_number:  8, // C-3
+      angle0:        0, pulse_width0: 1500,
+      angle1:       90, pulse_width1: 2500,
+      angle_min:   -45,
+      angle_max:    90
+    },
+    //-------------------------------------
+    {
+      servo_number:  9, // D-1
+      angle0:        0, pulse_width0: 1575,
+      angle1:       45, pulse_width1: 1075,
+      angle_min:   -18,
+      angle_max:    45
+    },
+    {
+      servo_number: 10, // D-2
+      angle0:        0, pulse_width0: 1550,
+      angle1:       90, pulse_width1:  550,
+      angle_min:    -9,
+      angle_max:    81
+    },
+    {
+      servo_number: 11, // D-3
+      angle0:        0, pulse_width0: 1485,
+      angle1:       90, pulse_width1:  485,
+      angle_min:   -45,
+      angle_max:    90
+    },
+
+  ];
+
+  calibration_data.forEach(function(c){
+    socket.send(JSON.stringify({
+      request: "calibration",
+      data: c
+    }));
+  });
+}
+
+</script>
+</head>
+<body>
+  <button class="led-button" v="on">LED ON</button>
+  <button class="led-button" v="off">LED OFF</button>
+  <button class="led-button" v="toggle">LED TOGGLE</button>
+  <div id="chart"></div>
+
+  <div>
+    <button class="sleep" v="sleep" >Sleep</button>
+    <button class="sleep" v="wakeup">Wakeup</button>
+  </div>
+
+<!--
+  <div>
+    <button class="calibration">Calibration</button>
+  </div>
+  <div>
+    <button class="legs" v="A=0,0,0">Legs:A-0-0-0</button>
+    <button class="legs" v="A=20,45,0">Legs:A-20-45-0</button>
+  </div>
+  <div>
+    <button class="legs" v="B=0,0,0">Legs:B-0-0-0</button>
+    <button class="legs" v="B=20,45,0">Legs:B-20-45-0</button>
+  </div>
+  <div>
+    <button class="legs" v="C=0,0,0">Legs:C-0-0-0</button>
+    <button class="legs" v="C=20,45,0">Legs:C-20-45-0</button>
+  </div>
+  <div>
+    <button class="legs" v="D=0,0,0">Legs:D-0-0-0</button>
+    <button class="legs" v="D=20,45,0">Legs:D-20-45-0</button>
+  </div>
+-->
+
+  <div>
+    Legs:
+    <button class="legs" v="A=0,0,0|B=0,0,0|C=0,0,0|D=0,0,0">Sit</button>
+    <button class="legs" v="A=20,45,0|B=20,45,0|C=20,45,0|D=20,45,0">Low</button>
+    <button class="legs" v="A=15,40,20|B=15,40,20|C=15,40,20|D=15,40,20">Mid</button>
+    <button class="legs" v="A=10,30,45|B=10,30,45|C=10,30,45|D=10,30,45">High</button>
+  </div>
+  <div>
+    Servos:
+    <button class="servos" v="0=   0,1=   0,2=   0, 3=   0, 4=   0, 5=   0,
+                              6=   0,7=   0,8=   0, 9=   0,10=   0,11=   0">Servo=ALL0</button>
+    <button class="servos" v="0=1500,1=1500,2=1500, 3=1500, 4=1500, 5=1500,
+                              6=1500,7=1500,8=1500, 9=1500,10=1500,11=1500">Servo=ALL1500</button>
+  </div>
+  
+  <div>
+    <select id="servo_number">
+      <option class="servo_number" value="0"  pulse_width="">A-1</option>
+      <option class="servo_number" value="1"  pulse_width="">A-2</option>
+      <option class="servo_number" value="2"  pulse_width="">A-3</option>
+      <option class="servo_number" value="3"  pulse_width="">B-1</option>
+      <option class="servo_number" value="4"  pulse_width="">B-2</option>
+      <option class="servo_number" value="5"  pulse_width="">B-3</option>
+      <option class="servo_number" value="6"  pulse_width="">C-1</option>
+      <option class="servo_number" value="7"  pulse_width="">C-2</option>
+      <option class="servo_number" value="8"  pulse_width="">C-3</option>
+      <option class="servo_number" value="9"  pulse_width="">D-1</option>
+      <option class="servo_number" value="10" pulse_width="">D-2</option>
+      <option class="servo_number" value="11" pulse_width="">D-3</option>
+    </select>
+  </div>
+  
+  <div>
+    <button class="pulse_width" pulse_width="500" > 500</button>
+    <button class="pulse_width" pulse_width="1000">1000</button>
+    <button class="pulse_width" pulse_width="1500">1500</button>
+    <button class="pulse_width" pulse_width="2000">2000</button>
+    <button class="pulse_width" pulse_width="2500">2500</button>
+  </div>
+    
+  <div>
+    <button class="pulse_width" delta="-100">-100</button>
+    <button class="pulse_width" delta="-25" > -25</button>
+    <button class="pulse_width" delta="-10" > -10</button>
+    <button class="pulse_width" delta="-1"  >  -1</button>
+  
+    <input id="pulse_width" value="" size=5 />
+    <button id="send">Send</button>
+    
+    <button class="pulse_width" delta="+1"  >  +1</button>
+    <button class="pulse_width" delta="+10" > +10</button>
+    <button class="pulse_width" delta="+25" > +25</button>
+    <button class="pulse_width" delta="+100">+100</button>
+  </div>
+  
+</body>
+</html>
