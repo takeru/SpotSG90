@@ -23,17 +23,20 @@ function init(){
   socket = new WebSocket(ws_url);
   socket.addEventListener('open', function (event) {
     socket.send(JSON.stringify({"msg": "hello"}));
-    calibration();
+    //calibration();
+    //setInterval(function(){ $(".led-button[v=toggle]").click(); }, 500);
   });
   socket.addEventListener('message', function (event) {
     var obj = JSON.parse(event.data);
-    //console.log('message=', obj);
-    if(obj.ahrs){
-      pushData(chart, obj);
-    }
-    if(obj.response=="servo"){
-      $("#pulse_width").val(obj.data.pulse_width);
-      $("option.servo_number[value="+obj.data.servo_number+"]").attr("v", obj.data.pulse_width);
+    console.log('message=', obj);
+    if(obj){
+      if(obj.ahrs){
+        pushData(chart, obj);
+      }
+      if(obj.response=="servo"){
+        $("#pulse_width").val(obj.data.pulse_width);
+        $("option.servo_number[value="+obj.data.servo_number+"]").attr("v", obj.data.pulse_width);
+      }
     }
   });
   socket.addEventListener('close', function (event) {
@@ -52,7 +55,6 @@ function init(){
       }
     }));
   });
-  setInterval(function(){ $(".led-button[v=toggle]").click(); }, 500);
 
   $("button#send").click(()=>{
     set_servo_pulse_width(parseInt($("#servo_number").val()), parseInt($("#pulse_width").val()));
@@ -109,17 +111,17 @@ function init(){
     });
   });
 
-  var t = 0;
-  setInterval(function(){
-    for(var leg_number=0; leg_number<4; leg_number++){
-      var x = 20*Math.sin(t*Math.PI/180);
-      var y = 20*Math.cos(t*Math.PI/180);
-      //if(leg_number<=1){ x = -x; }
-      if(leg_number%2==0){ y = -y; }
-      set_leg_position(leg_number, x, y, -90);
-    }
-    t+=10;
-  }, 200);
+  // var t = 0;
+  // setInterval(function(){
+  //   for(var leg_number=0; leg_number<4; leg_number++){
+  //     var x = 20*Math.sin(t*Math.PI/180);
+  //     var y = 20*Math.cos(t*Math.PI/180);
+  //     //if(leg_number<=1){ x = -x; }
+  //     if(leg_number%2==0){ y = -y; }
+  //     set_leg_position(leg_number, x, y, -90);
+  //   }
+  //   t+=10;
+  // }, 200);
 
   $("button.servos").click(function(){
     var v = $(this).attr("v");
@@ -249,23 +251,23 @@ function calibration(){
     },
     {
       servo_number:  1, // A-2
-      angle0:        0, pulse_width0: 1500,
-      angle1:       90, pulse_width1: 2500,
+      angle0:        0, pulse_width0: 1075,
+      angle1:       90, pulse_width1: 2175,
       angle_min:    -9,
       angle_max:    90
     },
     {
       servo_number:  2, // A-3
-      angle0:        0, pulse_width0: 1500,
-      angle1:       81, pulse_width1: 2400,
+      angle0:        0, pulse_width0: 1280,
+      angle1:       81, pulse_width1: 2300,
       angle_min:   -45,
       angle_max:    90
     },
     //-------------------------------------
     {
       servo_number:  3, // B-1
-      angle0:        0, pulse_width0: 1430,
-      angle1:       45, pulse_width1:  930,
+      angle0:        0, pulse_width0: 1525,
+      angle1:       45, pulse_width1: 1025,
       angle_min:   -18,
       angle_max:    45
     },
@@ -278,8 +280,8 @@ function calibration(){
     },
     {
       servo_number:  5, // B-3
-      angle0:        0, pulse_width0: 1575,
-      angle1:       90, pulse_width1:  575,
+      angle0:        0, pulse_width0: 1525,
+      angle1:       90, pulse_width1:  525,
       angle_min:   -45,
       angle_max:    90
     },
@@ -300,16 +302,16 @@ function calibration(){
     },
     {
       servo_number:  8, // C-3
-      angle0:        0, pulse_width0: 1500,
-      angle1:       90, pulse_width1: 2500,
+      angle0:        0, pulse_width0: 1175,
+      angle1:       90, pulse_width1: 2275,
       angle_min:   -45,
       angle_max:    90
     },
     //-------------------------------------
     {
       servo_number:  9, // D-1
-      angle0:        0, pulse_width0: 1575,
-      angle1:       45, pulse_width1: 1075,
+      angle0:        0, pulse_width0: 1525,
+      angle1:       45, pulse_width1: 1025,
       angle_min:   -18,
       angle_max:    45
     },
@@ -322,8 +324,8 @@ function calibration(){
     },
     {
       servo_number: 11, // D-3
-      angle0:        0, pulse_width0: 1485,
-      angle1:       90, pulse_width1:  485,
+      angle0:        0, pulse_width0: 1475,
+      angle1:       90, pulse_width1:  550,
       angle_min:   -45,
       angle_max:    90
     },
@@ -351,27 +353,6 @@ function calibration(){
     <button class="sleep" v="wakeup">Wakeup</button>
   </div>
 
-<!--
-  <div>
-    <button class="calibration">Calibration</button>
-  </div>
-  <div>
-    <button class="angles" v="A=0,0,0">Angles:A-0-0-0</button>
-    <button class="angles" v="A=20,45,0">Angles:A-20-45-0</button>
-  </div>
-  <div>
-    <button class="angles" v="B=0,0,0">Angles:B-0-0-0</button>
-    <button class="angles" v="B=20,45,0">Angles:B-20-45-0</button>
-  </div>
-  <div>
-    <button class="angles" v="C=0,0,0">Angles:C-0-0-0</button>
-    <button class="angles" v="C=20,45,0">Angles:C-20-45-0</button>
-  </div>
-  <div>
-    <button class="angles" v="D=0,0,0">Angles:D-0-0-0</button>
-    <button class="angles" v="D=20,45,0">Angles:D-20-45-0</button>
-  </div>
--->
   <div>
     Positions:
     <button class="positions" v="A=0,0,-50|B=0,0,-50|C=0,0,-50|D=0,0,-50">-50</button>
@@ -383,7 +364,7 @@ function calibration(){
 
   <div>
     Angles:
-    <button class="angles" v="A=0,0,0|B=0,0,0|C=0,0,0|D=0,0,0">Sit</button>
+    <button class="angles" v="A=0,0,0|B=0,0,0|C=0,0,0|D=0,0,0">Sit(0)</button>
     <button class="angles" v="A=20,45,-20|B=20,45,-20|C=10,30,45|D=10,30,45">HeadDown</button>
     <button class="angles" v="A=20,45,0|B=20,45,0|C=20,45,0|D=20,45,0">Low</button>
     <button class="angles" v="A=15,40,20|B=15,40,20|C=15,40,20|D=15,40,20">Mid</button>
@@ -395,6 +376,7 @@ function calibration(){
   </div>
   <div>
     Servos:
+    <button class="calibration">Calibration</button>
     <button class="servos" v="0=   0,1=   0,2=   0, 3=   0, 4=   0, 5=   0,
                               6=   0,7=   0,8=   0, 9=   0,10=   0,11=   0">Servo=ALL0</button>
     <button class="servos" v="0=1500,1=1500,2=1500, 3=1500, 4=1500, 5=1500,
