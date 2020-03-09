@@ -257,8 +257,9 @@ void loop()
     textAllWriteAvailable(buffer);
     */
 
-    String pingData = String(ms);
+    String pingData = String(loop_count);
     ws.pingAll((uint8_t*)pingData.c_str(), strlen(pingData.c_str())+1);
+    printf("pingAll: %s\n", pingData.c_str());
 
     prev_ms = ms;
     prev_sec = sec;

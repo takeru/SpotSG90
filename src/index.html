@@ -23,8 +23,9 @@ function init(){
   socket = new WebSocket(ws_url);
   socket.addEventListener('open', function (event) {
     socket.send(JSON.stringify({"msg": "hello"}));
-    //calibration();
-    //setInterval(function(){ $(".led-button[v=toggle]").click(); }, 500);
+    setTimeout(function(){
+      calibration();
+    }, 100);
   });
   socket.addEventListener('message', function (event) {
     var obj = JSON.parse(event.data);
@@ -111,18 +112,6 @@ function init(){
     });
   });
 
-  // var t = 0;
-  // setInterval(function(){
-  //   for(var leg_number=0; leg_number<4; leg_number++){
-  //     var x = 20*Math.sin(t*Math.PI/180);
-  //     var y = 20*Math.cos(t*Math.PI/180);
-  //     //if(leg_number<=1){ x = -x; }
-  //     if(leg_number%2==0){ y = -y; }
-  //     set_leg_position(leg_number, x, y, -90);
-  //   }
-  //   t+=10;
-  // }, 200);
-
   $("button.servos").click(function(){
     var v = $(this).attr("v");
     v.split(',').forEach(function(s){
@@ -135,6 +124,44 @@ function init(){
   $("button.calibration").click(function(){
     calibration();
   });
+
+  var intervalId = null;
+  $("button.motion").click(function(){
+    if(intervalId){
+      clearInterval(intervalId);
+      intervalId = null;
+    }
+    if(intervalId==null){
+      var v = $(this).attr("v");
+      // if(v=="led"){
+      //   intervalId = setInterval(function(){
+      //     $(".led-button[v=toggle]").click();
+      //   }, 500);
+      // }
+      if(v=="circle"){
+        var t = 0;
+        intervalId = setInterval(function(){
+          for(var leg_number=0; leg_number<4; leg_number++){
+            var x = 20*Math.sin(t*Math.PI/180);
+            var y = 20*Math.cos(t*Math.PI/180);
+            //if(leg_number<=1){ x = -x; }
+            if(leg_number%2==0){ y = -y; }
+            set_leg_position(leg_number, x, y, -90);
+          }
+          t+=10;
+        }, 200);
+      }
+      if(v=="test"){
+        var t = 0;
+        intervalId = setInterval(function(){
+          $(".angles.test"+t).click();
+          t = (t+1)%4;
+        }, 500);
+      }
+    }
+  });
+
+
 }
 $(init);
 
@@ -259,8 +286,8 @@ function calibration(){
     {
       servo_number:  2, // A-3
       angle0:        0, pulse_width0: 1280,
-      angle1:       81, pulse_width1: 2300,
-      angle_min:   -45,
+      angle1:       90, pulse_width1: 2300,
+      angle_min:   -30,
       angle_max:    90
     },
     //-------------------------------------
@@ -273,16 +300,16 @@ function calibration(){
     },
     {
       servo_number:  4, // B-2
-      angle0:        0, pulse_width0: 1440,
-      angle1:       90, pulse_width1:  440,
+      angle0:        0, pulse_width0: 2275,
+      angle1:       90, pulse_width1: 1175,
       angle_min:    -9,
-      angle_max:    81
+      angle_max:    90
     },
     {
       servo_number:  5, // B-3
-      angle0:        0, pulse_width0: 1525,
-      angle1:       90, pulse_width1:  525,
-      angle_min:   -45,
+      angle0:        0, pulse_width0: 1950,
+      angle1:       90, pulse_width1:  925,
+      angle_min:   -30,
       angle_max:    90
     },
     //-------------------------------------
@@ -295,8 +322,8 @@ function calibration(){
     },
     {
       servo_number:  7, // C-2
-      angle0:        0, pulse_width0: 1560,
-      angle1:       90, pulse_width1: 2560,
+      angle0:        0, pulse_width0: 1125,
+      angle1:       90, pulse_width1: 2225,
       angle_min:    -9,
       angle_max:    90
     },
@@ -304,7 +331,7 @@ function calibration(){
       servo_number:  8, // C-3
       angle0:        0, pulse_width0: 1175,
       angle1:       90, pulse_width1: 2275,
-      angle_min:   -45,
+      angle_min:   -30,
       angle_max:    90
     },
     //-------------------------------------
@@ -317,16 +344,16 @@ function calibration(){
     },
     {
       servo_number: 10, // D-2
-      angle0:        0, pulse_width0: 1550,
-      angle1:       90, pulse_width1:  550,
+      angle0:        0, pulse_width0: 2200,
+      angle1:       90, pulse_width1: 1100,
       angle_min:    -9,
-      angle_max:    81
+      angle_max:    90
     },
     {
       servo_number: 11, // D-3
-      angle0:        0, pulse_width0: 1475,
-      angle1:       90, pulse_width1:  550,
-      angle_min:   -45,
+      angle0:        0, pulse_width0: 1865,
+      angle1:       90, pulse_width1:  840,
+      angle_min:   -30,
       angle_max:    90
     },
 
@@ -354,6 +381,13 @@ function calibration(){
   </div>
 
   <div>
+    Motion:
+    <button class="motion" v="STOP">STOP</button>
+    <button class="motion" v="circle">circle</button>
+    <button class="motion" v="test">test</button>
+  </div>
+
+  <div>
     Positions:
     <button class="positions" v="A=0,0,-50|B=0,0,-50|C=0,0,-50|D=0,0,-50">-50</button>
     <button class="positions" v="A=0,0,-60|B=0,0,-60|C=0,0,-60|D=0,0,-60">-60</button>
@@ -364,7 +398,6 @@ function calibration(){
 
   <div>
     Angles:
-    <button class="angles" v="A=0,0,0|B=0,0,0|C=0,0,0|D=0,0,0">Sit(0)</button>
     <button class="angles" v="A=20,45,-20|B=20,45,-20|C=10,30,45|D=10,30,45">HeadDown</button>
     <button class="angles" v="A=20,45,0|B=20,45,0|C=20,45,0|D=20,45,0">Low</button>
     <button class="angles" v="A=15,40,20|B=15,40,20|C=15,40,20|D=15,40,20">Mid</button>
@@ -373,6 +406,11 @@ function calibration(){
     <button class="angles standup" v="A=0,30,45|B=0,30,45|C=0,30,45|D=0,30,45">StandUp</button>
     <button class="angles a" v="A=0,60, 0|B=0,30,45|C=0,30,45|D=0,60, 0">A</button>
     <button class="angles b" v="A=0,30,45|B=0,60, 0|C=0,60, 0|D=0,30,45">B</button>
+
+    <button class="angles test0" v="A=0,0,90|B=0,0,90|C=0,0,90|D=0,0,90">(0,0,90)</button>
+    <button class="angles test1" v="A=0,0,0|B=0,0,0|C=0,0,0|D=0,0,0">(0,0,0)</button>
+    <button class="angles test2" v="A=0,90,0|B=0,90,0|C=0,90,0|D=0,90,0">(0,90,0)</button>
+    <button class="angles test3" v="A=0,90,-30|B=0,90,-30|C=0,90,-30|D=0,90,-30">(0,90,-30)</button>
   </div>
   <div>
     Servos:
