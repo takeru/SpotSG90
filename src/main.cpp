@@ -133,9 +133,9 @@ void handleJsonRequest(JsonDocument& req, JsonDocument& resp)
           p->leg_number = leg_number;
           p->tick = i * (duration/size);
           p->x = r*cos(i*(360*num/size)*PI/180);
-          p->y = r*sin(i*(360*num/size)*PI/180);
-          if(leg_number%2==0){ p->y *= -1; }
-          p->z = -90;
+          p->z = r*sin(i*(360*num/size)*PI/180);
+          if(leg_number%2==0){ p->z *= -1; }
+          p->y = -90;
         }
       }
       dynamic_motion[size*4].leg_number = LEG_INVALID; // END
@@ -344,13 +344,13 @@ void loop()
         float x = positions[i].x;
         float y = positions[i].y;
         float z = positions[i].z;
-        int angle1 = atan(y/z)*180/PI;
-        float z2 = -sqrt(z*z+y*y);
+        int angle1 = atan2(-z,-y)*180/PI;
+        float y2 = -sqrt(y*y+z*z);
         float l1 = 43;
         float l2 = 57;
         float theta1 = NAN;
         float theta2 = NAN;
-        bool ok = kinematics.leg_ik(-1, x, z2, l1, l2, &theta1, &theta2);
+        bool ok = kinematics.leg_ik(-1, x, y2, l1, l2, &theta1, &theta2);
         if(ok){
           int angle2 = -(theta1*180/PI)-90;
           int angle3 = -(theta2*180/PI)+90;
