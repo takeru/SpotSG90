@@ -44,7 +44,7 @@ void Servos::set_leg_angles(int leg_number, int angle1, int angle2, int angle3)
     if(a<c.angle_min){ a = c.angle_min; }
     if(c.angle_max<a){ a = c.angle_max; }
     int pulse_width = c.pulse_width0 + (a-c.angle0) * (c.pulse_width1-c.pulse_width0)/(c.angle1-c.angle0);
-    printf("servo_number=%d pulse_width=%d\n", servo_number, pulse_width);
+    //printf("servo_number=%d pulse_width=%d\n", servo_number, pulse_width);
     set_pulse_width(servo_number, pulse_width);
   }
 }

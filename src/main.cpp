@@ -12,13 +12,21 @@
 #include <ArduinoJson.h>
 #include "secret.h"
 #include "Servos.h"
+#include "Motions.h"
+#include "Kinematics.h"
+
 
 #define LED_BUILTIN 10
 
 WiFiMulti wifiMulti;
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
-Servos servos;
+Servos  servos;
+Motions motions;
+Kinematics kinematics;
+unsigned long _motion_start_ms = 0;
+float _motion_speed = 0;
+LegPosition* dynamic_motion = NULL;
 
 const char* PARAM_MESSAGE = "message";
 
@@ -28,7 +36,6 @@ void notFound(AsyncWebServerRequest *request) {
 
 void handleJsonRequest(JsonDocument& req, JsonDocument& resp)
 {
-
   if(req["request"]=="led"){
     if(req["data"]["action"]=="on"){
       digitalWrite(LED_BUILTIN, LOW);
@@ -44,6 +51,7 @@ void handleJsonRequest(JsonDocument& req, JsonDocument& resp)
       resp["led"] = digitalRead(LED_BUILTIN);
     }
   }
+
   if(req["request"]=="servo"){
     int servo_number = req["data"]["servo_number"];
     int pulse_width  = req["data"]["pulse_width"];
@@ -56,6 +64,7 @@ void handleJsonRequest(JsonDocument& req, JsonDocument& resp)
     data["servo_number"] = servo_number;
     data["pulse_width"]  = pulse_width;
   }
+
   if(req["request"]=="sleep"){
     if(req["data"]["sleep"] == "sleep"){
       servos.sleep(true);
@@ -64,6 +73,7 @@ void handleJsonRequest(JsonDocument& req, JsonDocument& resp)
       servos.sleep(false);
     }
   }
+
   if(req["request"]=="calibration"){
     int servo_number = req["data"]["servo_number"];
 
@@ -80,7 +90,7 @@ void handleJsonRequest(JsonDocument& req, JsonDocument& resp)
     servos.calibration(servo_number, c);
 
     resp["response"] = "calibration";
-    JsonObject data = resp.createNestedObject("data");
+    // JsonObject data = resp.createNestedObject("data");
   }
   if(req["request"]=="leg"){
     int leg_number = req["data"]["leg_number"];
@@ -92,8 +102,58 @@ void handleJsonRequest(JsonDocument& req, JsonDocument& resp)
     servos.set_leg_angles(leg_number, angle1, angle2, angle3);
 
     resp["response"] = "leg";
-    JsonObject data = resp.createNestedObject("data");
+    // JsonObject data = resp.createNestedObject("data");
     //data[""] = "";
+  }
+
+  if(req["request"]=="motion"){
+    String name = req["data"]["name"];
+    float speed = req["data"]["speed"];
+    printf("motion=%s speed=%4.1f\n", name.c_str(), speed);
+
+    if(name=="STOP"){
+      _motion_start_ms = 0;
+      _motion_speed = 0;
+    }else
+    if(name=="circle"){
+      if(dynamic_motion){
+        _motion_start_ms = 0;
+        _motion_speed = 0;
+        free(dynamic_motion);
+      }
+
+      int r = 10;
+      int num = 5;
+      int size = 12*num;
+      int duration = 10000;
+      dynamic_motion = new LegPosition[size*4+1];
+      for(int i=0; i<size; i++){
+        for(int leg_number=0; leg_number<4; leg_number++){
+          LegPosition *p = &dynamic_motion[i*4+leg_number];
+          p->leg_number = leg_number;
+          p->tick = i * (duration/size);
+          p->x = r*cos(i*(360*num/size)*PI/180);
+          p->y = r*sin(i*(360*num/size)*PI/180);
+          if(leg_number%2==0){ p->y *= -1; }
+          p->z = -90;
+        }
+      }
+      dynamic_motion[size*4].leg_number = LEG_INVALID; // END
+
+      motions.select(dynamic_motion);
+      _motion_start_ms = millis();
+      _motion_speed = speed;
+    }else{
+      bool ok = motions.select(name);
+      if(ok){
+        _motion_start_ms = millis();
+        _motion_speed = speed;
+      }
+    }
+
+    resp["response"] = "motion";
+    // JsonObject data = resp.createNestedObject("data");
+    // data[""] = "";
   }
 }
 
@@ -199,6 +259,7 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);
   servos.begin();
+  motions.begin();
 
   Serial.begin(115200);
   WiFi.mode(WIFI_STA);
@@ -240,10 +301,10 @@ void loop()
 {
   unsigned long ms  = millis();
   unsigned long sec = ms / 1000;
-  static unsigned long prev_ms         = 0;
+  //static unsigned long prev_ms         = 0;
   static unsigned long prev_sec        = 0;
   static unsigned long loop_count      = 0;
-  static unsigned long prev_loop_count = 0;
+  //static unsigned long prev_loop_count = 0;
   if(prev_sec < sec){
     ws.cleanupClients();
 
@@ -261,11 +322,43 @@ void loop()
     ws.pingAll((uint8_t*)pingData.c_str(), strlen(pingData.c_str())+1);
     printf("pingAll: %s\n", pingData.c_str());
 
-    prev_ms = ms;
+    //prev_ms = ms;
     prev_sec = sec;
-    prev_loop_count = loop_count;
+    //prev_loop_count = loop_count;
 
     update_display();
+  }
+
+  if(0 < _motion_start_ms){
+    static unsigned long _motion_prev_ms = 0;
+    if(1 < ms-_motion_prev_ms){
+      LegPosition positions[4];
+      int tick = (ms-_motion_start_ms)*_motion_speed;
+      motions.update(tick, positions);
+      for(int i=0; i<4; i++){
+        if(positions[i].leg_number == LEG_INVALID){
+          continue;
+        }
+        // printf("leg_number=%d tick=%d, x=%d y=%d z=%d\n", positions[i].leg_number, positions[i].tick, positions[i].x, positions[i].y, positions[i].z);
+
+        float x = positions[i].x;
+        float y = positions[i].y;
+        float z = positions[i].z;
+        int angle1 = atan(y/z)*180/PI;
+        float z2 = -sqrt(z*z+y*y);
+        float l1 = 43;
+        float l2 = 57;
+        float theta1 = NAN;
+        float theta2 = NAN;
+        bool ok = kinematics.leg_ik(-1, x, z2, l1, l2, &theta1, &theta2);
+        if(ok){
+          int angle2 = -(theta1*180/PI)-90;
+          int angle3 = -(theta2*180/PI)+90;
+          servos.set_leg_angles(positions[i].leg_number, angle1, angle2, angle3);
+        }
+      }
+      _motion_prev_ms = ms;
+    }
   }
 
   static unsigned long prev_imu_ms = 0;

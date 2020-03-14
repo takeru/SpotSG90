@@ -126,11 +126,15 @@ function init(){
   });
 
   var intervalId = null;
-  $("button.motion").click(function(){
+  var stopMotionJS = function(){
     if(intervalId){
       clearInterval(intervalId);
       intervalId = null;
     }
+  }
+  $("button.motion-js").click(function(){
+    stopMotionJS();
+    stopMotion();
     if(intervalId==null){
       var v = $(this).attr("v");
       // if(v=="led"){
@@ -161,7 +165,21 @@ function init(){
     }
   });
 
-
+  var stopMotion = function(){
+    socket.send(JSON.stringify({
+      request: "motion",
+      data: {name: "STOP", speed: 1.0}
+    }));
+  }
+  $("button.motion").click(function(){
+    stopMotionJS();
+    stopMotion();
+    var v = $(this).attr("v");
+    socket.send(JSON.stringify({
+      request: "motion",
+      data: {name: v, speed: 1.0}
+    }));
+  });
 }
 $(init);
 
@@ -383,8 +401,16 @@ function calibration(){
   <div>
     Motion:
     <button class="motion" v="STOP">STOP</button>
+    <button class="motion" v="demo">demo</button>
     <button class="motion" v="circle">circle</button>
-    <button class="motion" v="test">test</button>
+  </div>
+
+  <div>
+    Motion(JS):
+    <button class="motion-js" v="STOP">STOP</button>
+    <button class="motion-js" v="circle">circle</button>
+    <button class="motion-js" v="test">test</button>
+    <button class="motion-js" v="led">reset</button>
   </div>
 
   <div>
