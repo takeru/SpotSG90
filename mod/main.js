@@ -1,0 +1,105 @@
+/* global trace */
+import { Application, Style, Skin, Label } from 'piu/MC'
+import THREE from "three-math"
+
+const FONT = 'OpenSans-Regular-52'
+
+const application = new Application(null, {
+  contents: [
+    new Label(null, {
+      style: new Style({ font: FONT, color: 'white' }),
+      skin: new Skin({ fill: 'black' }),
+      top: 0,
+      bottom: 0,
+      left: 0,
+      right: 0,
+      string: '0'
+    })
+  ]
+})
+
+const counts = {
+  a: 0
+}
+
+import Timer from "timer";
+import Time from "time";
+import Digital from "pins/digital";
+import IK from 'ik'
+import Motion from 'motion'
+
+const ik = new IK(THREE);
+const motion = new Motion();
+
+const ARM2_H = 43;
+const ARM3_H = 57;
+const makeLeg = function(front, left, ik_matrix4_array){
+  const leg = {
+    target: {
+      position: new THREE.Vector3()
+    },
+    ik_matrix4: new THREE.Matrix4().fromArray(ik_matrix4_array),
+    left: left,
+    front: front,
+    l1: ARM2_H,
+    l2: ARM3_H
+  };
+  return leg;
+}
+const dog = {
+  position: new THREE.Vector3(),
+  rotation: new THREE.Euler(),
+  legs: [
+    makeLeg(true,true, [ 1,0,0,0,0,1,0,0,0,0,1,0,38.5,22,-40,1 ]),
+    makeLeg(true,false, [ 1,0,0,0,0,1,0,0,0,0,1,0,38.5,22,40,1 ]),
+    makeLeg(false,true, [ 1,0,0,0,0,1,0,0,0,0,1,0,-91.5,22,-40,1 ]),
+    makeLeg(false,false, [ 1,0,0,0,0,1,0,0,0,0,1,0,-91.5,22,40,1 ])
+  ]
+};
+
+let count = 0;
+Timer.repeat(() => {
+  Digital.write(10, (count/100) & 1);
+
+  const t = Time.ticks;
+  motion.dance(t, dog);
+  motion.walk(t, dog);
+  dog.legs.forEach(function (leg) {
+    leg.angles = ik.calc_leg_angles(dog, leg, t);
+  });
+  count++;
+}, 1);
+
+let prev_t = null;
+let prev_count = null;
+Timer.repeat(() => {
+  const t = Time.ticks;
+  if(prev_t){
+    trace(`count=${count} loop/sec=${Math.round(1000*(count-prev_count)/(t-prev_t))}}\n`)
+  }
+  prev_t = t;
+  prev_count = count;
+}, 5000);
+
+Timer.repeat(() => {
+  //trace(`dog.position.x=${dog.position.x}\n`)
+  //trace(`dog.rotation.x=${dog.rotation.x}\n`)
+  //trace(`dog.legs[0].target.position.x=${dog.legs[0].target.position.x}\n`)
+  for(let i=0; i<4; i++){
+    const a = dog.legs[i].angles;
+    trace(`a[${i}]=${a.angle1},${a.angle2},${a.angle3}\n`)
+  }
+}, 1000);
+
+function countup (button) {
+  counts[button] += 1
+  trace(counts[button] + "\n")
+  application.first.string = String(counts[button])
+}
+
+global.button.a.onChanged = function () {
+  const v = this.read()
+  if (v) {
+    countup('a')
+  }
+}

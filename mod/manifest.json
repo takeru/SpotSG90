@@ -1,0 +1,22 @@
+{
+	"include": [
+	  "$(MODDABLE)/examples/manifest_base.json",
+	  "$(MODDABLE)/examples/manifest_piu.json"
+	],
+	"modules": {
+		"three-math": "./three-math",
+		"ik": "./ik",
+		"motion": "./motion",
+		"*": ["./main"]
+	},
+	"preload": [
+		"three-math",
+		"ik",
+		"motion"
+	],
+	"resources": {
+		  "*-alpha": [
+			  "$(MODDABLE)/examples/assets/fonts//OpenSans-Regular-52"
+		  ]
+	}
+  }

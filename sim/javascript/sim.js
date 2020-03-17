@@ -214,10 +214,12 @@ const Sim = function () {
         legs.push(leg);
 
         const ik_matrix4 = new THREE.Matrix4();
-        [sw, leg, leg.ik_origin].forEach((obj) => {
+        [sw, leg, leg.ik_origin].forEach((obj, index) => {
+          console.log("fb=", fb, "lr=", lr, "index=", index, "position=[", obj.position.toArray().toString(), "] rotation=[", obj.rotation.toArray().toString(), "]");
           ik_matrix4.multiply((new THREE.Matrix4()).setPosition(obj.position));
           ik_matrix4.multiply((new THREE.Matrix4()).makeRotationFromEuler(obj.rotation));
         });
+        console.log("fb=", fb, "lr=", lr, "ik_matrix4=[", ik_matrix4.toArray().toString(), "]");
         leg.ik_matrix4 = ik_matrix4;
 
         const target = new THREE.Mesh(new THREE.BoxGeometry(20, 3, 3), meshNormalMaterial);
