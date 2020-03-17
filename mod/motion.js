@@ -28,7 +28,7 @@ const Motion = function () {
         progress = 1;
       }
       let x = -1200;
-      const stepx = 50;
+      const stepx = 20;
       x += (leg_number < 2 ? 30 : -120);
       if (leg_number == 0) x += stepx / 4;
       if (leg_number == 1) x -= stepx / 4;
@@ -36,7 +36,7 @@ const Motion = function () {
       if (leg_number == 3) x -= stepx / 4;
       x += cycle * stepx + progress * stepx;
       dog.legs[leg_number].target.position.x = x;
-      dog.legs[leg_number].target.position.y = 5 * Math.sin(progress * Math.PI);
+      dog.legs[leg_number].target.position.y = 20 * Math.sin(progress * Math.PI);
       dog.legs[leg_number].target.position.z = leg_number % 2 == 0 ? -50 : 50;
     }
     const bx = dog.legs.reduce((sum, leg) => sum + leg.target.position.x, 0) / 4 + 30;
@@ -52,6 +52,11 @@ const Motion = function () {
     dog.rotation.x = 10 * Math.sin(t * 0.27 * D2R) * D2R;
     dog.rotation.y = 10 * Math.sin(t * 0.31 * D2R) * D2R;
     dog.rotation.z = 10 * Math.sin(t * 0.37 * D2R) * D2R;
+  }
+
+  this.default = function(t, dog){
+    //this.dance(t, dog);
+    this.walk(t, dog);
   }
 };
 

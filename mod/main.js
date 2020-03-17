@@ -1,6 +1,12 @@
 /* global trace */
 import { Application, Style, Skin, Label } from 'piu/MC'
 import THREE from "three-math"
+import Timer from "timer";
+import Time from "time";
+import Digital from "pins/digital";
+import IK from 'ik'
+import Motion from 'motion'
+import Servo from "servo"
 
 const FONT = 'OpenSans-Regular-52'
 
@@ -22,14 +28,11 @@ const counts = {
   a: 0
 }
 
-import Timer from "timer";
-import Time from "time";
-import Digital from "pins/digital";
-import IK from 'ik'
-import Motion from 'motion'
-
 const ik = new IK(THREE);
 const motion = new Motion();
+const servo = new Servo();
+servo.sleep(false);
+const D2R = Math.PI / 180; // degree to radian
 
 const ARM2_H = 43;
 const ARM3_H = 57;
@@ -62,10 +65,12 @@ Timer.repeat(() => {
   Digital.write(10, (count/100) & 1);
 
   const t = Time.ticks;
-  motion.dance(t, dog);
-  motion.walk(t, dog);
-  dog.legs.forEach(function (leg) {
+  motion.default(t, dog);
+  dog.legs.forEach(function (leg, leg_number) {
     leg.angles = ik.calc_leg_angles(dog, leg, t);
+    if(leg.angles){
+      servo.set_leg_angles(leg_number, leg.angles.angle1/D2R, leg.angles.angle2/D2R, leg.angles.angle3/D2R);
+    }
   });
   count++;
 }, 1);
@@ -82,12 +87,11 @@ Timer.repeat(() => {
 }, 5000);
 
 Timer.repeat(() => {
-  //trace(`dog.position.x=${dog.position.x}\n`)
-  //trace(`dog.rotation.x=${dog.rotation.x}\n`)
-  //trace(`dog.legs[0].target.position.x=${dog.legs[0].target.position.x}\n`)
-  for(let i=0; i<4; i++){
-    const a = dog.legs[i].angles;
-    trace(`a[${i}]=${a.angle1},${a.angle2},${a.angle3}\n`)
+  for(let leg_number=0; leg_number<4; leg_number++){
+    const a = dog.legs[leg_number].angles;
+    if(a){
+      //trace(`a[${leg_number}]=${a.angle1},${a.angle2},${a.angle3}\n`)
+    }
   }
 }, 1000);
 

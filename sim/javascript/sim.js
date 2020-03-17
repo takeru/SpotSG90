@@ -266,9 +266,15 @@ const Sim = function () {
 
   function set_servo_angles(leg_number, angle1, angle2, angle3) {
     const leg = dog.legs[leg_number];
-    leg.servo1.axis.rotation.x = angle1;
-    leg.servo2.axis.rotation.x = angle2;
-    leg.servo3.axis.rotation.x = angle3;
+    if(leg.left){
+      leg.servo1.axis.rotation.x = angle1;
+      leg.servo2.axis.rotation.x = angle2;
+      leg.servo3.axis.rotation.x = angle3-180*D2R;
+    }else{
+      leg.servo1.axis.rotation.x = -angle1;
+      leg.servo2.axis.rotation.x = -angle2;
+      leg.servo3.axis.rotation.x = -angle3;
+    }
   }
 
   this.start = function (cb) {
@@ -278,3 +284,5 @@ const Sim = function () {
   };
   this.set_servo_angles = function () { set_servo_angles.apply(this, arguments); };
 };
+
+export default Sim;

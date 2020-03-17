@@ -1,18 +1,21 @@
 {
 	"include": [
 	  "$(MODDABLE)/examples/manifest_base.json",
-	  "$(MODDABLE)/examples/manifest_piu.json"
+	  "$(MODDABLE)/examples/manifest_piu.json",
+	  "$(MODDABLE)/modules/drivers/pca9685/manifest.json"
 	],
 	"modules": {
 		"three-math": "./three-math",
 		"ik": "./ik",
 		"motion": "./motion",
+		"servo": "./servo",
 		"*": ["./main"]
 	},
 	"preload": [
 		"three-math",
 		"ik",
-		"motion"
+		"motion",
+		"servo"
 	],
 	"resources": {
 		  "*-alpha": [
