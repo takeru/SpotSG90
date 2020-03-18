@@ -5,6 +5,7 @@
 	  "$(MODDABLE)/modules/drivers/pca9685/manifest.json"
 	],
 	"modules": {
+		"dog": "./dog",
 		"three-math": "./three-math",
 		"ik": "./ik",
 		"motion": "./motion",

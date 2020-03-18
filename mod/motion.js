@@ -46,17 +46,23 @@ const Motion = function () {
 
   const D2R = Math.PI / 180; // degree to radian
   this.dance = function (t, dog) {
-    dog.position.x = BODY_X + 30 * Math.sin(t * 0.23 * D2R);
-    dog.position.y = BODY_Y + 30 * Math.sin(t * 0.17 * D2R);
-    dog.position.z = BODY_Z + 30 * Math.sin(t * 0.11 * D2R);
-    dog.rotation.x = 10 * Math.sin(t * 0.27 * D2R) * D2R;
-    dog.rotation.y = 10 * Math.sin(t * 0.31 * D2R) * D2R;
-    dog.rotation.z = 10 * Math.sin(t * 0.37 * D2R) * D2R;
+    t = t * 0.3;
+    for (let leg_number = 0; leg_number < 4; leg_number++) {
+      dog.legs[leg_number].target.position.x = BODY_X + (leg_number < 2 ? 30 : -80);
+      dog.legs[leg_number].target.position.y = 0;
+      dog.legs[leg_number].target.position.z = BODY_Z + leg_number % 2 == 0 ? -50 : 50;
+    }
+    dog.position.x = BODY_X + 10 * Math.sin(t * 0.23 * D2R);
+    dog.position.y = BODY_Y + 10 * Math.sin(t * 0.17 * D2R);
+    dog.position.z = BODY_Z + 10 * Math.sin(t * 0.11 * D2R);
+    dog.rotation.x = 5 * Math.sin(t * 0.27 * D2R) * D2R;
+    dog.rotation.y = 5 * Math.sin(t * 0.31 * D2R) * D2R;
+    dog.rotation.z = 5 * Math.sin(t * 0.37 * D2R) * D2R;
   }
 
   this.default = function(t, dog){
-    //this.dance(t, dog);
-    this.walk(t, dog);
+    this.dance(t, dog);
+    //this.walk(t, dog);
   }
 };
 
