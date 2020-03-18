@@ -2,7 +2,8 @@
 	"include": [
 	  "$(MODDABLE)/examples/manifest_base.json",
 	  "$(MODDABLE)/examples/manifest_piu.json",
-	  "$(MODDABLE)/modules/drivers/pca9685/manifest.json"
+	  "$(MODDABLE)/modules/drivers/pca9685/manifest.json",
+	  "$(MODDABLE)/examples/manifest_net.json"
 	],
 	"modules": {
 		"dog": "./dog",
@@ -10,13 +11,27 @@
 		"ik": "./ik",
 		"motion": "./motion",
 		"servo": "./servo",
-		"*": ["./main"]
+		"secret": "./secret",
+		"ws_server": "./ws_server",
+		"*": [
+			"./main",
+			"$(MODULES)/network/websocket/*",
+			"$(MODULES)/data/base64/*",
+			"$(MODULES)/data/logical/*",
+			"$(MODULES)/crypt/digest/*",
+			"$(MODULES)/crypt/digest/kcl/*"
+		]
 	},
 	"preload": [
 		"three-math",
 		"ik",
 		"motion",
-		"servo"
+		"servo",
+		"websocket",
+		"base64",
+		"digest",
+		"logical"
+
 	],
 	"resources": {
 		  "*-alpha": [

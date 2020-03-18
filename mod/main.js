@@ -1,6 +1,7 @@
 /* global trace */
 import { Application, Style, Skin, Label } from 'piu/MC'
 import Dog from "dog";
+import WSServer from "ws_server";
 
 const FONT = 'OpenSans-Regular-52'
 
@@ -36,3 +37,17 @@ global.button.a.onChanged = function () {
 }
 
 const dog = new Dog();
+const server = new WSServer((cmd, request) => {
+  let response = null;
+
+  if (cmd.startsWith("dog.")) {
+    trace(`WS: cmd=${cmd} request=${JSON.stringify(request)}\n`);
+    response = dog.cmd(cmd, request);
+  } else if (cmd == "ping") {
+    response = {
+      "seq": request.seq,
+      "ms": request.ms
+    }
+  }
+  return response;
+});

@@ -13,15 +13,8 @@ export default class Servo {
     this.pca9685.setPWMFreq(50);
   }
 
-  sleep(s)
-  {
-    this.sleeping = s;
-    if(this.sleeping){
-      this.pca9685.sleep();
-    }else{
-      this.pca9685.wakeup();
-    }
-  }
+  sleep(){ this.pca9685.sleep(); }
+  wakeup(){ this.pca9685.wakeup(); }
 
   set_pulse_width(servo_number, pulse_width) {
     this.pca9685.writeMicroseconds(servo_number, pulse_width);

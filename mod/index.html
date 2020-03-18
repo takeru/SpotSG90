@@ -1,0 +1,150 @@
+<script src="https://code.jquery.com/jquery-3.4.1.min.js"
+  integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous">
+  </script>
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.15/c3.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.15.0/d3.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.15/c3.js"></script>
+
+<script>
+  var socket = null;
+
+  function initWS() {
+    setInterval(function () { keep_connect(); }, 1000);
+    setInterval(function () { try_ping(); }, 100);
+  };
+
+  const keep_connect = function () {
+    if (socket == null) {
+      socket = connect();
+    } else if (socket.readyState == WebSocket.CONNECTING) {
+      console.log("CONNECTING");
+    } else if (socket.readyState == WebSocket.OPEN) {
+      // nop
+    } else if (socket.readyState == WebSocket.CLOSING) {
+      console.log("CLOSING");
+    } else if (socket.readyState == WebSocket.CLOSED) {
+      console.log("CLOSED");
+      socket = null;
+    } else {
+      console.log("readyState=", socket.readyState);
+    }
+  }
+
+  let prev_seq = null;
+  let prev_ms = null;
+  const try_ping = function () {
+    if (socket && socket.readyState == WebSocket.OPEN) {
+      const ms = Date.now();
+      if (socket.sent_ms == null || 1000 < ms - socket.sent_ms) {
+        cmd("ping", { "seq": socket.seq, "ms": ms }).then((response) => {
+          const ms = Date.now();
+          const delay = ms - response.ms;
+          //console.log('delay=', delay);
+          socket.sent_ms = null;
+          if (prev_ms == null || 5000 < ms - prev_ms) {
+            if (prev_ms) {
+              console.log("ping-pong/sec=", 1000 * (prev_seq - socket.seq) / (prev_ms - ms));
+            }
+            prev_seq = socket.seq;
+            prev_ms = ms;
+          }
+        });
+        socket.sent_ms = ms;
+        socket.seq++;
+      }
+    }
+  }
+
+  const connect = function () {
+    var ws_url = "";
+    if (window.location.protocol == "file:") {
+      ws_url = 'ws://192.168.0.127/ws';
+    } else {
+      ws_url = 'ws://' + window.location.host + ':' + window.location.port + '/ws';
+    }
+
+    const socket = new WebSocket(ws_url);
+
+    socket.addEventListener('open', function (event) {
+      //socket.send(JSON.stringify({ "msg": "hello" }));
+      socket.seq = 0;
+      socket.sent_ms = 0;
+    });
+
+    socket.addEventListener('message', function (event) {
+      var resp = JSON.parse(event.data);
+      if (resp.id) {
+        receive(resp);
+      }
+    });
+
+    socket.addEventListener('close', function (event) {
+      console.log('close');
+    });
+
+    socket.addEventListener('error', function (event) {
+      console.log('error');
+    });
+
+    return socket;
+  }
+
+  const waiting_list = new Map();
+  let seq = 0;
+  const cmd = function (name, request) {
+    return new Promise((resolve, reject) => {
+      const timestamp = Date.now();
+      const id = timestamp + "-" + (seq++);
+      const req = { "id": id, "cmd": name, "request": request };
+      if(name!="ping"){ console.log(req.id, req.cmd, req.request); }
+      socket.send(JSON.stringify(req));
+      waiting_list.set(id, [timestamp, resolve, reject]);
+    });
+  }
+
+  const receive = function (obj) {
+    if(obj.cmd!="ping"){ console.log(obj.id, obj.cmd, obj.response, obj.error); }
+    const [timestamp, resolve, reject] = waiting_list.get(obj.id);
+    waiting_list.delete(obj.id);
+    if (obj.response && resolve) {
+      resolve(obj.response);
+    }else if(reject){
+      reject(obj.error);
+    }
+  };
+
+  setInterval(() => {
+    for (let [id, value] of waiting_list) {
+      const [timestamp, resolve, reject] = value;
+      if (10 * 1000 < Date.now() - timestamp) {
+        waiting_list.delete(id);
+        if (reject) {
+          reject("timeout");
+        }
+      }
+    }
+  }, 1000);
+
+  window.onload = function () {
+    initWS();
+    initUI();
+  }
+
+  const initUI = function () {
+    $("#wakeup").click(() => {
+      cmd("dog.wakeup", { "xyz": 999 }).then((response) => {
+      });
+    });
+    $("#sleep").click(() => {
+      cmd("dog.sleep", { "abc": 123 }).then((response) => {
+      });
+    });
+  };
+
+
+</script>
+
+
+<button id="wakeup">Wakeup</button>
+<button id="sleep">Sleep</button>

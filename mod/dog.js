@@ -11,7 +11,6 @@ const Dog = function () {
   const ik = new IK(THREE);
   const motion = new Motion();
   const servo = new Servo();
-  servo.sleep(false);
   const D2R = Math.PI / 180; // degree to radian
 
   const ARM2_H = 43;
@@ -66,14 +65,29 @@ const Dog = function () {
     prev_count = count;
   }, 5000);
 
-  Timer.repeat(() => {
-    for (let leg_number = 0; leg_number < 4; leg_number++) {
-      const a = dog.legs[leg_number].angles;
-      if (a) {
-        //trace(`a[${leg_number}]=${a.angle1},${a.angle2},${a.angle3}\n`)
-      }
+  // Timer.repeat(() => {
+  //   for (let leg_number = 0; leg_number < 4; leg_number++) {
+  //     const a = dog.legs[leg_number].angles;
+  //     if (a) {
+  //       //trace(`a[${leg_number}]=${a.angle1},${a.angle2},${a.angle3}\n`)
+  //     }
+  //   }
+  // }, 1000);
+
+  this.sleep = ()=>{ servo.sleep(); };
+  this.wakeup = ()=>{ servo.wakeup(); };
+
+  this.cmd = function(cmd, request){
+    if(cmd=="dog.sleep"){
+      this.sleep();
+      return {"result": "OK"};
     }
-  }, 1000);
+    if(cmd=="dog.wakeup"){
+      this.wakeup();
+      return {"result": "OK"};
+    }
+    return {"ERROR": "dog: invalid command."};
+  }
 }
 
 export default Dog;
