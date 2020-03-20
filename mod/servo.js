@@ -32,8 +32,34 @@ export default class Servo {
       this.set_pulse_width(servo_number, pulse_width);
     }
   }
-}
 
+  update_calibration(c){
+    const _c = calibration_data[c.servo_number];
+    _c.angle0       = c.angle0;
+    _c.pulse_width0 = c.pulse_width0;
+    _c.angle1       = c.angle1;
+    _c.pulse_width1 = c.pulse_width1;
+    _c.angle_min    = c.angle_min;
+    _c.angle_max    = c.angle_max;
+    return _c;
+  }
+
+  cmd(cmd, request){
+    if(cmd=="dog.servo.update_calibration"){
+      const c = this.update_calibration(request.calibration);
+      return {"result": "OK", "calibration": calibration_data[request.servo_number]};
+    }
+    if(cmd=="dog.servo.get_calibration"){
+      return {"result": "OK", "calibration": calibration_data[request.servo_number]};
+    }
+    if(cmd=="dog.servo.set_pulse_width"){
+      this.set_pulse_width(request.servo_number, request.pulse_width);
+      return {"result": "OK", "servo_number": request.servo_number, "pulse_width": request.pulse_width};
+    }
+
+    return {"ERROR": `unknown command [${cmd}]`};
+  }
+}
 
 const calibration_data = [
   {
@@ -124,4 +150,3 @@ const calibration_data = [
     angle_max: 90
   },
 ];
-

@@ -140,7 +140,10 @@ const Dog = function () {
     if(cmd=="dog.params"){
       return this.set_params(request.dog);
     }
-    return {"ERROR": "dog: invalid command."};
+    if (cmd.startsWith("dog.servo.")) {
+      return servo.cmd(cmd, request);
+    }
+    return {"ERROR": `unknown command [${cmd}]`};
   }
 }
 

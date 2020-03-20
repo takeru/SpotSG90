@@ -44,6 +44,7 @@ const server = new WSServer((cmd, request) => {
   if (cmd.startsWith("dog.")) {
     trace(`WS: cmd=${cmd} request=${JSON.stringify(request)}\n`);
     response = dog.cmd(cmd, request);
+    trace(`response=${JSON.stringify(response)}\n`);
   } else if (cmd == "ping") {
     response = {
       "seq": request.seq,

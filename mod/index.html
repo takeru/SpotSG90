@@ -135,6 +135,7 @@
   window.onload = function () {
     initWS();
     initUI();
+    initCalibrationUI();
   }
 
   const initUI = function () {
@@ -248,8 +249,60 @@
         queued_dog_params_cmd.dog = null;
       }
     }, 1);
-
   };
+
+  const initCalibrationUI = function(){
+    $("select[name=servo_number]").change(function(){
+      var servo_number = parseInt($(this).val());
+      cmd("dog.servo.get_calibration", {servo_number: servo_number}).then((response)=>{
+        $("#calibration input[name=angle0]").val(response.calibration.angle0);
+        $("#calibration input[name=pulse_width0]").val(response.calibration.pulse_width0);
+        $("#calibration input[name=angle1]").val(response.calibration.angle1);
+        $("#calibration input[name=pulse_width1]").val(response.calibration.pulse_width1);
+        $("#calibration input[name=angle_min]").val(response.calibration.angle_min);
+        $("#calibration input[name=angle_max]").val(response.calibration.angle_max);
+        $("#calibration input[name=test_pulse_width]").val("");
+      });
+    });
+
+    $("button[name=save_calibration]").click(function(){
+      const servo_number = parseInt($("select[name=servo_number]").val());
+      const request = {
+          "calibration": {
+            servo_number: servo_number,
+            angle0:       parseInt($("#calibration input[name=angle0]").val()),
+            pulse_width0: parseInt($("#calibration input[name=pulse_width0]").val()),
+            angle1:       parseInt($("#calibration input[name=angle1]").val()),
+            pulse_width1: parseInt($("#calibration input[name=pulse_width1]").val()),
+            angle_min:    parseInt($("#calibration input[name=angle_min]").val()),
+            angle_max:    parseInt($("#calibration input[name=angle_max]").val())
+          }
+        }
+      cmd("dog.servo.update_calibration", request).then((response)=>{
+        $("select[name=servo_number]").change();
+      });
+    });
+
+    $("button.test_pulse_width").click(function(){
+      var v = $(this).attr("v");
+      if(v==""){
+        v = parseInt($("input[name=test_pulse_width]").val());
+      }else if(v.startsWith("+") || v.startsWith("-")){
+        v = parseInt($("input[name=test_pulse_width]").val()) + parseInt(v);
+      }else {
+        v = parseInt(v);
+      }
+      if(400<=v && v<=2900){
+        const servo_number = parseInt($("select[name=servo_number]").val());
+        const pulse_width = v;
+        cmd("dog.servo.set_pulse_width", {servo_number: servo_number, pulse_width: pulse_width}).then((response)=>{
+          $("input[name=test_pulse_width]").val(response.pulse_width);
+        });
+      }
+    });
+
+  }
+
 </script>
 
 
@@ -303,6 +356,7 @@
 </style>
 
 <div id="params">
+  <h3>params</h3>
   <div>
     <h4>position:</h4>
     <label>X:<span></span><input id="position_x" class="slider" type="range" step="0.1" value="0"  min="-30" max="30"></label>
@@ -338,5 +392,114 @@
     <label>X:<span></span><input id="leg3_position_x" class="slider" type="range" step="0.1" value="-90" min="-120" max="-60"></label>
     <label>Y:<span></span><input id="leg3_position_y" class="slider" type="range" step="0.1" value="0"   min="0" max="60"></label>
     <label>Z:<span></span><input id="leg3_position_z" class="slider" type="range" step="0.1" value="40"  min="20" max="80"></label>
+  </div>
+</div>
+
+
+
+<style>
+  #calibration h4{
+    display: inline-block;
+    width: 120px;
+    margin: 0px;
+  }
+  #calibration div{
+    padding: 2px;
+    margin: 0px;
+    border: 1px solid black;
+  }
+  #calibration label{
+    display: inline-block;
+    width: 300px;
+    margin: 0px;
+  }
+  #calibration label input[type=range]{
+    width: 200px;
+    margin: 0px;
+  }
+  #calibration label span{
+    display: inline-block;
+    width: 30px;
+    margin: 0px;
+  }
+</style>
+
+<div id="calibration">
+  <h3>calibration</h3>
+  <div>
+    <h4>servo_number:</h4>
+    <label>
+      <select name="servo_number">
+        <option class="servo_number" value="0"  pulse_width="">A-1</option>
+        <option class="servo_number" value="1"  pulse_width="">A-2</option>
+        <option class="servo_number" value="2"  pulse_width="">A-3</option>
+        <option class="servo_number" value="3"  pulse_width="">B-1</option>
+        <option class="servo_number" value="4"  pulse_width="">B-2</option>
+        <option class="servo_number" value="5"  pulse_width="">B-3</option>
+        <option class="servo_number" value="6"  pulse_width="">C-1</option>
+        <option class="servo_number" value="7"  pulse_width="">C-2</option>
+        <option class="servo_number" value="8"  pulse_width="">C-3</option>
+        <option class="servo_number" value="9"  pulse_width="">D-1</option>
+        <option class="servo_number" value="10" pulse_width="">D-2</option>
+        <option class="servo_number" value="11" pulse_width="">D-3</option>
+      </select>
+    </label>
+  </div>
+
+  <div>
+    <h4>angle0:</h4>
+    <label>
+      angle0:
+      <input type="text" name="angle0">
+    </label>
+    <label>
+      pulse_width0:
+      <input type="text" name="pulse_width0">
+    </label>
+  </div>
+  <div>
+    <h4>angle1:</h4>
+    <label>
+      angle1:
+      <input type="text" name="angle1">
+    </label>
+    <label>
+      pulse_width1:
+      <input type="text" name="pulse_width1">
+    </label>
+  </div>
+  <div>
+    <h4>min/max:</h4>
+    <label>
+      angle_min:
+      <input type="text" name="angle_min">
+    </label>
+    <label>
+      angle_max:
+      <input type="text" name="angle_max">
+    </label>
+  </div>
+  <div>
+    <button name="save_calibration">save</button>
+  </div>
+  <div>
+    <h4>test:</h4>
+    <div>
+      pulse_width:<input type="text" name="test_pulse_width">
+      <button class="test_pulse_width" v="">test</button>
+      <button class="test_pulse_width" v="1000">1000</button>
+      <button class="test_pulse_width" v="1500">1500</button>
+      <button class="test_pulse_width" v="2000">2000</button>
+    </div>
+    <div>
+      <button class="test_pulse_width" v="-100">-100</button>
+      <button class="test_pulse_width" v="-25">-25</button>
+      <button class="test_pulse_width" v="-10">-10</button>
+      <button class="test_pulse_width" v="-1">-1</button>
+      <button class="test_pulse_width" v="+1">+1</button>
+      <button class="test_pulse_width" v="+10">+10</button>
+      <button class="test_pulse_width" v="+15">+25</button>
+      <button class="test_pulse_width" v="+100">+100</button>
+    </div>
   </div>
 </div>
