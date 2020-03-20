@@ -2,6 +2,7 @@
 import { Application, Style, Skin, Label } from 'piu/MC'
 import Dog from "dog";
 import WSServer from "ws_server";
+import Time from "time";
 
 const FONT = 'OpenSans-Regular-52'
 
@@ -47,6 +48,12 @@ const server = new WSServer((cmd, request) => {
     response = {
       "seq": request.seq,
       "ms": request.ms
+    }
+  } else if (cmd == "hello") {
+    trace(`**** hello ****\n`);
+    response = {
+      "now": Date.now(),
+      "ticks": Time.ticks
     }
   }
   return response;

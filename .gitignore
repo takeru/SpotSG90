@@ -6,3 +6,4 @@
 include/index_html.h
 include/secret.h
 .DS_Store
+secret.js

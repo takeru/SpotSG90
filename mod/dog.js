@@ -39,27 +39,34 @@ const Dog = function () {
     ]
   };
 
+  let motion_name = null;
+  let motion_args = null;
   let count = 0;
   Timer.repeat(() => {
-    Digital.write(10, (count / 100) & 1);
+    if(motion_name && motion[motion_name]){
+      Digital.write(10, (count / 100) & 1);
+      const t = Time.ticks;
+      motion[motion_name](t, dog, motion_args);
+      set_all_legs_angles();
+      count++;
+    }
+  }, 1);
 
-    const t = Time.ticks;
-    motion.default(t, dog);
+  const set_all_legs_angles = function(){
     dog.legs.forEach(function (leg, leg_number) {
-      leg.angles = ik.calc_leg_angles(dog, leg, t);
+      leg.angles = ik.calc_leg_angles(dog, leg, false);
       if (leg.angles) {
         servo.set_leg_angles(leg_number, leg.angles.angle1 / D2R, leg.angles.angle2 / D2R, leg.angles.angle3 / D2R);
       }
     });
-    count++;
-  }, 1);
+  }
 
   let prev_t = null;
   let prev_count = null;
   Timer.repeat(() => {
     const t = Time.ticks;
     if (prev_t) {
-      trace(`count=${count} loop/sec=${Math.round(1000 * (count - prev_count) / (t - prev_t))}}\n`)
+      trace(`count=${count} loop/sec=${Math.round(1000 * (count - prev_count) / (t - prev_t))}\n`)
     }
     prev_t = t;
     prev_count = count;
@@ -74,6 +81,45 @@ const Dog = function () {
   //   }
   // }, 1000);
 
+  this.set_params = function(_dog){
+    /*
+    const before = {
+      "dog": {
+        "position": dog.position.toArray(),
+        "rotation": dog.rotation.toArray(),
+        "legs": [
+          dog.legs[0].target.position.toArray(),
+          dog.legs[1].target.position.toArray(),
+          dog.legs[2].target.position.toArray(),
+          dog.legs[3].target.position.toArray()
+        ]
+      }
+    }*/
+
+    dog.position.x = _dog.position[0];
+    dog.position.y = _dog.position[1];
+    dog.position.z = _dog.position[2];
+    dog.rotation.x = _dog.rotation[0];
+    dog.rotation.y = _dog.rotation[1];
+    dog.rotation.z = _dog.rotation[2];
+    for(let i=0; i<4; i++){
+      dog.legs[i].target.position.x = _dog.legs[i].position[0];
+      dog.legs[i].target.position.y = _dog.legs[i].position[1];
+      dog.legs[i].target.position.z = _dog.legs[i].position[2];
+    }
+    set_all_legs_angles();
+    return {
+      "dog": {
+        "legs": [
+          {"angles": dog.legs[0].angles},
+          {"angles": dog.legs[1].angles},
+          {"angles": dog.legs[2].angles},
+          {"angles": dog.legs[3].angles}
+        ]
+      }
+    }
+  }
+
   this.sleep = ()=>{ servo.sleep(); };
   this.wakeup = ()=>{ servo.wakeup(); };
 
@@ -85,6 +131,14 @@ const Dog = function () {
     if(cmd=="dog.wakeup"){
       this.wakeup();
       return {"result": "OK"};
+    }
+    if(cmd=="dog.motion"){
+      motion_name = request.name;
+      motion_args = request.args;
+      return {"result": "OK"};
+    }
+    if(cmd=="dog.params"){
+      return this.set_params(request.dog);
     }
     return {"ERROR": "dog: invalid command."};
   }

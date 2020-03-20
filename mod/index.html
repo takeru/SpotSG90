@@ -7,11 +7,12 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.15/c3.js"></script>
 
 <script>
+  const D2R = Math.PI / 180; // degree to radian
   var socket = null;
 
   function initWS() {
     setInterval(function () { keep_connect(); }, 1000);
-    setInterval(function () { try_ping(); }, 100);
+    setInterval(function () { try_ping(); }, 1000);
   };
 
   const keep_connect = function () {
@@ -59,7 +60,7 @@
   const connect = function () {
     var ws_url = "";
     if (window.location.protocol == "file:") {
-      ws_url = 'ws://192.168.0.127/ws';
+      ws_url = 'ws://192.168.0.108/ws';
     } else {
       ws_url = 'ws://' + window.location.host + ':' + window.location.port + '/ws';
     }
@@ -67,7 +68,10 @@
     const socket = new WebSocket(ws_url);
 
     socket.addEventListener('open', function (event) {
-      //socket.send(JSON.stringify({ "msg": "hello" }));
+      cmd("hello", {}).then((response)=>{
+        console.log("hello: ", response);
+      });
+
       socket.seq = 0;
       socket.sent_ms = 0;
     });
@@ -132,19 +136,205 @@
   }
 
   const initUI = function () {
-    $("#wakeup").click(() => {
+    $("#wakeup").click(function(){
       cmd("dog.wakeup", { "xyz": 999 }).then((response) => {
       });
     });
-    $("#sleep").click(() => {
+    $("#sleep").click(function(){
       cmd("dog.sleep", { "abc": 123 }).then((response) => {
       });
     });
+    $(".motion").click(function(){
+      const name = $(this).attr("name");
+      const args = $(this).attr("args");
+      cmd("dog.motion", { "name": name, "args": JSON.parse(args) }).then((response) => {
+      });
+    });
+    $(".params.a").click(function(){
+      const dog = {
+        "position": [0,65,0],
+        "rotation": [0,0,0],
+        "legs":[
+          {"position":[ 45,0,-50]},
+          {"position":[ 45,0, 50]},
+          {"position":[-90,0,-50]},
+          {"position":[-90,0, 50]}
+        ]
+      };
+      set_params(dog)
+    });
+
+    const set_params = function(dog){
+      $("#position_x").val(dog.position[0]);
+      $("#position_y").val(dog.position[1]);
+      $("#position_z").val(dog.position[2]);
+      $("#rotation_x").val(dog.rotation[0]);
+      $("#rotation_y").val(dog.rotation[1]);
+      $("#rotation_z").val(dog.rotation[2]);
+      $("#leg0_position_x").val(dog.legs[0].position[0]);
+      $("#leg0_position_y").val(dog.legs[0].position[1]);
+      $("#leg0_position_z").val(dog.legs[0].position[2]);
+      $("#leg1_position_x").val(dog.legs[1].position[0]);
+      $("#leg1_position_y").val(dog.legs[1].position[1]);
+      $("#leg1_position_z").val(dog.legs[1].position[2]);
+      $("#leg2_position_x").val(dog.legs[2].position[0]);
+      $("#leg2_position_y").val(dog.legs[2].position[1]);
+      $("#leg2_position_z").val(dog.legs[2].position[2]);
+      $("#leg3_position_x").val(dog.legs[3].position[0]);
+      $("#leg3_position_y").val(dog.legs[3].position[1]);
+      $("#leg3_position_z").val(dog.legs[3].position[2]);
+      $(".slider").each((index, element)=>{
+        update_text($(element));
+      })
+      cmd("dog.params", { "dog": dog }).then((response) => {
+      });
+    }
+
+    const update_text = function(slider){
+      $("span", $(slider).parent()).text($(slider).val());
+    }
+    $(".slider").each((index, element)=>{
+      update_text($(element));
+    })
+
+    $(".slider").on("input", function(){
+      update_text($(this));
+      const dog = {
+        "position": [
+          parseInt($("#position_x").val()),
+          parseInt($("#position_y").val()),
+          parseInt($("#position_z").val())
+        ],
+        "rotation": [
+          parseInt($("#rotation_x").val()) * D2R,
+          parseInt($("#rotation_y").val()) * D2R,
+          parseInt($("#rotation_z").val()) * D2R
+        ],
+        "legs":[
+          {"position":[
+            parseInt($("#leg0_position_x").val()),
+            parseInt($("#leg0_position_y").val()),
+            parseInt($("#leg0_position_z").val())
+          ]},
+          {"position":[
+            parseInt($("#leg1_position_x").val()),
+            parseInt($("#leg1_position_y").val()),
+            parseInt($("#leg1_position_z").val())
+          ]},
+          {"position":[
+            parseInt($("#leg2_position_x").val()),
+            parseInt($("#leg2_position_y").val()),
+            parseInt($("#leg2_position_z").val())
+          ]},
+          {"position":[
+            parseInt($("#leg3_position_x").val()),
+            parseInt($("#leg3_position_y").val()),
+            parseInt($("#leg3_position_z").val())
+          ]}
+        ]
+      };
+      queued_dog_params_cmd.dog = dog;
+    });
+    let = queued_dog_params_cmd = {dog: null, busy: false};
+    setInterval(()=>{
+      if(!queued_dog_params_cmd.busy && queued_dog_params_cmd.dog){
+        cmd("dog.params", { "dog": queued_dog_params_cmd.dog }).then((response) => {
+          console.log(response);
+          queued_dog_params_cmd.busy = false;
+        });
+        queued_dog_params_cmd.busy = true;
+        queued_dog_params_cmd.dog = null;
+      }
+    }, 1);
+
   };
-
-
 </script>
 
 
-<button id="wakeup">Wakeup</button>
-<button id="sleep">Sleep</button>
+<div>
+  <button id="wakeup">Wakeup</button>
+  <button id="sleep">Sleep</button>
+</div>
+
+<div>
+  <button class="motion" name="default" args='{}'          >default</button>
+  <button class="motion" name="dance"   args='{}'          >dance</button>
+  <button class="motion" name="walk"    args='{}'          >walk</button>
+  <button class="motion" name="step"    args='{"speed":2.0,"dog_x": -5,"dog_z": 0}'>step</button>
+  <button class="motion" name="step"    args='{"speed":3.0,"dog_x": -6,"dog_z": 0}'>step</button>
+  <button class="motion" name="step"    args='{"speed":1.5,"dog_x": -7,"dog_z": 0}'>step</button>
+  <button class="motion" name="step"    args='{"speed":1.5,"dog_x": -8,"dog_z": 0}'>step</button>
+  <button class="motion" name="STOP"    args='{}'>STOP</button>
+</div>
+
+<div>
+  <button class="params a">a</button>
+  <button class="params b">b</button>
+  <button class="params c">c</button>
+</div>
+
+<style>
+  #params h4{
+    display: inline-block;
+    width: 120px;
+    margin: 0px;
+  }
+  #params div{
+    padding: 2px;
+    margin: 0px;
+    border: 1px solid black;
+  }
+  #params label{
+    display: inline-block;
+    width: 300px;
+    margin: 0px;
+  }
+  #params label input[type=range]{
+    width: 200px;
+    margin: 0px;
+  }
+  #params label span{
+    display: inline-block;
+    width: 30px;
+    margin: 0px;
+  }
+</style>
+
+<div id="params">
+  <div>
+    <h4>position:</h4>
+    <label>X:<span></span><input id="position_x" class="slider" type="range" value="0"  min="-30" max="30"></label>
+    <label>Y:<span></span><input id="position_y" class="slider" type="range" value="65" min="10" max="75"></label>
+    <label>Z:<span></span><input id="position_z" class="slider" type="range" value="0"  min="-30" max="30"></label>
+  </div>
+  <div>
+    <h4>rotation:</h4>
+    <label>X:<span></span><input id="rotation_x" class="slider" type="range" value="0" min="-45" max="45"></label>
+    <label>Y:<span></span><input id="rotation_y" class="slider" type="range" value="0" min="-45" max="45"></label>
+    <label>Z:<span></span><input id="rotation_z" class="slider" type="range" value="0" min="-45" max="45"></label>
+  </div>
+  <div>
+    <h4>leg[0]:</h4>
+    <label>X:<span></span><input id="leg0_position_x" class="slider" type="range" value="45"  min="15" max="75"></label>
+    <label>Y:<span></span><input id="leg0_position_y" class="slider" type="range" value="0"   min="0" max="60"></label>
+    <label>Z:<span></span><input id="leg0_position_z" class="slider" type="range" value="-50" min="-80" max="-20"></label>
+  </div>
+  <div>
+    <h4>leg[1]:</h4>
+    <label>X:<span></span><input id="leg1_position_x" class="slider" type="range" value="45"  min="15" max="75"></label>
+    <label>Y:<span></span><input id="leg1_position_y" class="slider" type="range" value="0"   min="0" max="60"></label>
+    <label>Z:<span></span><input id="leg1_position_z" class="slider" type="range" value="50"  min="20" max="80"></label>
+  </div>
+  <div>
+    <h4>leg[2]:</h4>
+    <label>X:<span></span><input id="leg2_position_x" class="slider" type="range" value="-90" min="-120" max="-60"></label>
+    <label>Y:<span></span><input id="leg2_position_y" class="slider" type="range" value="0"   min="0" max="60"></label>
+    <label>Z:<span></span><input id="leg2_position_z" class="slider" type="range" value="-50" min="-80" max="-20"></label>
+  </div>
+  <div>
+    <h4>leg[3]:</h4>
+    <label>X:<span></span><input id="leg3_position_x" class="slider" type="range" value="-90" min="-120" max="-60"></label>
+    <label>Y:<span></span><input id="leg3_position_y" class="slider" type="range" value="0"   min="0" max="60"></label>
+    <label>Z:<span></span><input id="leg3_position_z" class="slider" type="range" value="50"  min="20" max="80"></label>
+  </div>
+</div>

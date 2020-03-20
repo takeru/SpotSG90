@@ -17,7 +17,7 @@ const IK = function (THREE) {
     return t;
   }
 
-  this.calc_leg_angles = function (dog, leg, t, debug) {
+  this.calc_leg_angles = function (dog, leg, debug) {
     const target = leg.target;
     const m = new THREE.Matrix4();
     m.multiply((new THREE.Matrix4()).setPosition(dog.position));
