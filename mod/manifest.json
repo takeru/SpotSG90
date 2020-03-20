@@ -3,7 +3,8 @@
 	  "$(MODDABLE)/examples/manifest_base.json",
 	  "$(MODDABLE)/examples/manifest_piu.json",
 	  "$(MODDABLE)/modules/drivers/pca9685/manifest.json",
-	  "$(MODDABLE)/examples/manifest_net.json"
+	  "$(MODDABLE)/examples/manifest_net.json",
+	  "$(MODDABLE)/modules/network/mdns/manifest.json"
 	],
 	"modules": {
 		"dog": "./dog",
@@ -31,7 +32,6 @@
 		"base64",
 		"digest",
 		"logical"
-
 	],
 	"resources": {
 		  "*-alpha": [

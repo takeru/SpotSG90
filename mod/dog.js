@@ -50,7 +50,7 @@ const Dog = function () {
       set_all_legs_angles();
       count++;
     }
-  }, 1);
+  }, 25);
 
   const set_all_legs_angles = function(){
     dog.legs.forEach(function (leg, leg_number) {

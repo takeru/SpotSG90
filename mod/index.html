@@ -32,8 +32,6 @@
     }
   }
 
-  let prev_seq = null;
-  let prev_ms = null;
   const try_ping = function () {
     if (socket && socket.readyState == WebSocket.OPEN) {
       const ms = Date.now();
@@ -41,15 +39,19 @@
         cmd("ping", { "seq": socket.seq, "ms": ms }).then((response) => {
           const ms = Date.now();
           const delay = ms - response.ms;
-          //console.log('delay=', delay);
-          socket.sent_ms = null;
-          if (prev_ms == null || 5000 < ms - prev_ms) {
-            if (prev_ms) {
-              console.log("ping-pong/sec=", 1000 * (prev_seq - socket.seq) / (prev_ms - ms));
-            }
-            prev_seq = socket.seq;
-            prev_ms = ms;
+          if(100<=delay){
+            console.log("!!! 100ms < delay=", delay);
           }
+          socket.sent_ms = null;
+          /*
+          if (!socket._delay_prev_ms || 5000 < ms - socket._delay_prev_ms) {
+            if (socket._delay_prev_ms) {
+              console.log("ping-pong/sec=", 1000 * (socket._delay_prev_seq - socket.seq) / (socket._delay_prev_ms - ms));
+            }
+            socket._delay_prev_seq = socket.seq;
+            socket._delay_prev_ms = ms;
+          }
+          */
         });
         socket.sent_ms = ms;
         socket.seq++;
@@ -60,7 +62,7 @@
   const connect = function () {
     var ws_url = "";
     if (window.location.protocol == "file:") {
-      ws_url = 'ws://192.168.0.108/ws';
+      ws_url = 'ws://spotsg90.local/ws';
     } else {
       ws_url = 'ws://' + window.location.host + ':' + window.location.port + '/ws';
     }
@@ -155,10 +157,10 @@
         "position": [0,65,0],
         "rotation": [0,0,0],
         "legs":[
-          {"position":[ 45,0,-50]},
-          {"position":[ 45,0, 50]},
-          {"position":[-90,0,-50]},
-          {"position":[-90,0, 50]}
+          {"position":[ 45,0,-40]},
+          {"position":[ 45,0, 40]},
+          {"position":[-90,0,-40]},
+          {"position":[-90,0, 40]}
         ]
       };
       set_params(dog)
@@ -303,38 +305,38 @@
 <div id="params">
   <div>
     <h4>position:</h4>
-    <label>X:<span></span><input id="position_x" class="slider" type="range" value="0"  min="-30" max="30"></label>
-    <label>Y:<span></span><input id="position_y" class="slider" type="range" value="65" min="10" max="75"></label>
-    <label>Z:<span></span><input id="position_z" class="slider" type="range" value="0"  min="-30" max="30"></label>
+    <label>X:<span></span><input id="position_x" class="slider" type="range" step="0.1" value="0"  min="-30" max="30"></label>
+    <label>Y:<span></span><input id="position_y" class="slider" type="range" step="0.1" value="65" min="10" max="75"></label>
+    <label>Z:<span></span><input id="position_z" class="slider" type="range" step="0.1" value="0"  min="-30" max="30"></label>
   </div>
   <div>
     <h4>rotation:</h4>
-    <label>X:<span></span><input id="rotation_x" class="slider" type="range" value="0" min="-45" max="45"></label>
-    <label>Y:<span></span><input id="rotation_y" class="slider" type="range" value="0" min="-45" max="45"></label>
-    <label>Z:<span></span><input id="rotation_z" class="slider" type="range" value="0" min="-45" max="45"></label>
+    <label>X:<span></span><input id="rotation_x" class="slider" type="range" step="0.1" value="0" min="-45" max="45"></label>
+    <label>Y:<span></span><input id="rotation_y" class="slider" type="range" step="0.1" value="0" min="-45" max="45"></label>
+    <label>Z:<span></span><input id="rotation_z" class="slider" type="range" step="0.1" value="0" min="-45" max="45"></label>
   </div>
   <div>
     <h4>leg[0]:</h4>
-    <label>X:<span></span><input id="leg0_position_x" class="slider" type="range" value="45"  min="15" max="75"></label>
-    <label>Y:<span></span><input id="leg0_position_y" class="slider" type="range" value="0"   min="0" max="60"></label>
-    <label>Z:<span></span><input id="leg0_position_z" class="slider" type="range" value="-50" min="-80" max="-20"></label>
+    <label>X:<span></span><input id="leg0_position_x" class="slider" type="range" step="0.1" value="45"  min="15" max="75"></label>
+    <label>Y:<span></span><input id="leg0_position_y" class="slider" type="range" step="0.1" value="0"   min="0" max="60"></label>
+    <label>Z:<span></span><input id="leg0_position_z" class="slider" type="range" step="0.1" value="-40" min="-80" max="-20"></label>
   </div>
   <div>
     <h4>leg[1]:</h4>
-    <label>X:<span></span><input id="leg1_position_x" class="slider" type="range" value="45"  min="15" max="75"></label>
-    <label>Y:<span></span><input id="leg1_position_y" class="slider" type="range" value="0"   min="0" max="60"></label>
-    <label>Z:<span></span><input id="leg1_position_z" class="slider" type="range" value="50"  min="20" max="80"></label>
+    <label>X:<span></span><input id="leg1_position_x" class="slider" type="range" step="0.1" value="45"  min="15" max="75"></label>
+    <label>Y:<span></span><input id="leg1_position_y" class="slider" type="range" step="0.1" value="0"   min="0" max="60"></label>
+    <label>Z:<span></span><input id="leg1_position_z" class="slider" type="range" step="0.1" value="40"  min="20" max="80"></label>
   </div>
   <div>
     <h4>leg[2]:</h4>
-    <label>X:<span></span><input id="leg2_position_x" class="slider" type="range" value="-90" min="-120" max="-60"></label>
-    <label>Y:<span></span><input id="leg2_position_y" class="slider" type="range" value="0"   min="0" max="60"></label>
-    <label>Z:<span></span><input id="leg2_position_z" class="slider" type="range" value="-50" min="-80" max="-20"></label>
+    <label>X:<span></span><input id="leg2_position_x" class="slider" type="range" step="0.1" value="-90" min="-120" max="-60"></label>
+    <label>Y:<span></span><input id="leg2_position_y" class="slider" type="range" step="0.1" value="0"   min="0" max="60"></label>
+    <label>Z:<span></span><input id="leg2_position_z" class="slider" type="range" step="0.1" value="-40" min="-80" max="-20"></label>
   </div>
   <div>
     <h4>leg[3]:</h4>
-    <label>X:<span></span><input id="leg3_position_x" class="slider" type="range" value="-90" min="-120" max="-60"></label>
-    <label>Y:<span></span><input id="leg3_position_y" class="slider" type="range" value="0"   min="0" max="60"></label>
-    <label>Z:<span></span><input id="leg3_position_z" class="slider" type="range" value="50"  min="20" max="80"></label>
+    <label>X:<span></span><input id="leg3_position_x" class="slider" type="range" step="0.1" value="-90" min="-120" max="-60"></label>
+    <label>Y:<span></span><input id="leg3_position_y" class="slider" type="range" step="0.1" value="0"   min="0" max="60"></label>
+    <label>Z:<span></span><input id="leg3_position_z" class="slider" type="range" step="0.1" value="40"  min="20" max="80"></label>
   </div>
 </div>
