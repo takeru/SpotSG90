@@ -47,14 +47,30 @@ export default class Servo {
   cmd(cmd, request){
     if(cmd=="dog.servo.update_calibration"){
       const c = this.update_calibration(request.calibration);
-      return {"result": "OK", "calibration": calibration_data[request.servo_number]};
+      return {"result": "OK"};
     }
     if(cmd=="dog.servo.get_calibration"){
-      return {"result": "OK", "calibration": calibration_data[request.servo_number]};
+      if(!false){
+        const c = calibration_data[request.servo_number];
+        const _c = {};
+        _c.angle0       = c.angle0;
+        _c.pulse_width0 = c.pulse_width0;
+        _c.angle1       = c.angle1;
+        _c.pulse_width1 = c.pulse_width1;
+        _c.angle_min    = c.angle_min;
+        _c.angle_max    = c.angle_max;
+        return {"result": "OK", "calibration": _c};
+      }else{
+        return {"result": "OK", "calibration": calibration_data[request.servo_number]};
+      }
     }
     if(cmd=="dog.servo.set_pulse_width"){
       this.set_pulse_width(request.servo_number, request.pulse_width);
       return {"result": "OK", "servo_number": request.servo_number, "pulse_width": request.pulse_width};
+    }
+    if(cmd=="dog.servo.set_leg_angles"){
+      this.set_leg_angles(request.leg_number, request.angle1, request.angle2, request.angle3);
+      return {"result": "OK"};
     }
 
     return {"ERROR": `unknown command [${cmd}]`};
@@ -71,7 +87,7 @@ const calibration_data = [
   },
   {
     servo_number: 1, // A-2
-    angle0: 0, pulse_width0: 1075,
+    angle0: 0, pulse_width0: 1045,
     angle1: 90, pulse_width1: 2175,
     angle_min: -9,
     angle_max: 90
@@ -108,7 +124,7 @@ const calibration_data = [
   //-------------------------------------
   {
     servo_number: 6, // C-1
-    angle0: 0, pulse_width0: 1470,
+    angle0: 0, pulse_width0: 1500,
     angle1: 45, pulse_width1: 1970,
     angle_min: -18,
     angle_max: 45
@@ -122,8 +138,8 @@ const calibration_data = [
   },
   {
     servo_number: 8, // C-3
-    angle0: 0, pulse_width0: 1175,
-    angle1: 90, pulse_width1: 2275,
+    angle0: 0, pulse_width0: 1100,
+    angle1: 90, pulse_width1: 2200,
     angle_min: -30,
     angle_max: 90
   },

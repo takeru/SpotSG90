@@ -135,6 +135,8 @@
   window.onload = function () {
     initWS();
     initUI();
+    initTunesUI();
+    initParamsUI();
     initCalibrationUI();
   }
 
@@ -148,107 +150,166 @@
       });
     });
     $(".motion").click(function(){
-      const name = $(this).attr("name");
-      const args = $(this).attr("args");
-      cmd("dog.motion", { "name": name, "args": JSON.parse(args) }).then((response) => {
+      const name  = $(this).attr("name");
+      const speed = $("#motion_speed").val();
+      const args  = $(this).attr("args");
+      cmd("dog.motion", { "name": name, "speed": speed, "args": JSON.parse(args) }).then((response) => {
       });
     });
-    $(".params.a").click(function(){
-      const dog = {
-        "position": [0,65,0],
-        "rotation": [0,0,0],
+    $("#motion_speed").on("input", function(){
+      const speed  = $(this).val();
+      queued_cmd.speed = speed;
+    });
+    let queued_cmd = {speed: null, busy: false};
+    setInterval(function(){
+      if(!queued_cmd.busy && queued_cmd.speed){
+        cmd("dog.set_motion_speed", {speed: queued_cmd.speed}).then((response) => {
+          console.log(response);
+          queued_cmd.busy = false;
+        });
+        queued_cmd.busy = true;
+        queued_cmd.speed = null;
+      }
+    }, 50);
+  };
+
+  const initParamsUI = function () {
+    const slidersUI = initSlidersUI("params");
+    const params = {
+        "position": {x: 0,y: 65,z: 0},
+        "rotation": {x: 0,y:  0,z: 0},
         "legs":[
-          {"position":[ 45,0,-40]},
-          {"position":[ 45,0, 40]},
-          {"position":[-90,0,-40]},
-          {"position":[-90,0, 40]}
+          {"target":{"position":{x:  15, y: 0, z: -30}}},
+          {"target":{"position":{x:  15, y: 0, z:  30}}},
+          {"target":{"position":{x: -90, y: 0, z: -30}}},
+          {"target":{"position":{x: -90, y: 0, z:  30}}}
         ]
       };
-      set_params(dog)
+    $("#params .preset button[v=a]").click(function(){
+      slidersUI.set_params(params)
     });
+    $("#params .preset button[v=b]").click(function(){
+      const p = JSON.parse(JSON.stringify(params));
+      p.legs[0].target.position.y += 10;
+      p.legs[3].target.position.y += 10;
+      slidersUI.set_params(p)
+    });
+    $("#params .preset button[v=c]").click(function(){
+      const p = JSON.parse(JSON.stringify(params));
+      p.legs[1].target.position.y += 10;
+      p.legs[2].target.position.y += 10;
+      slidersUI.set_params(p)
+    });
+  };
 
-    const set_params = function(dog){
-      $("#position_x").val(dog.position[0]);
-      $("#position_y").val(dog.position[1]);
-      $("#position_z").val(dog.position[2]);
-      $("#rotation_x").val(dog.rotation[0]);
-      $("#rotation_y").val(dog.rotation[1]);
-      $("#rotation_z").val(dog.rotation[2]);
-      $("#leg0_position_x").val(dog.legs[0].position[0]);
-      $("#leg0_position_y").val(dog.legs[0].position[1]);
-      $("#leg0_position_z").val(dog.legs[0].position[2]);
-      $("#leg1_position_x").val(dog.legs[1].position[0]);
-      $("#leg1_position_y").val(dog.legs[1].position[1]);
-      $("#leg1_position_z").val(dog.legs[1].position[2]);
-      $("#leg2_position_x").val(dog.legs[2].position[0]);
-      $("#leg2_position_y").val(dog.legs[2].position[1]);
-      $("#leg2_position_z").val(dog.legs[2].position[2]);
-      $("#leg3_position_x").val(dog.legs[3].position[0]);
-      $("#leg3_position_y").val(dog.legs[3].position[1]);
-      $("#leg3_position_z").val(dog.legs[3].position[2]);
-      $(".slider").each((index, element)=>{
+  const initTunesUI = function () {
+    const slidersUI = initSlidersUI("tunes");
+    $("#tunes .preset button[v=zero]").click(function(){
+      const tunes = {
+        "position": {x:0,y:0,z:0},
+        "rotation": {x:0,y:0,z:0},
+        "legs":[
+          {"target":{"position":{x:0,y:0,z:0}}},
+          {"target":{"position":{x:0,y:0,z:0}}},
+          {"target":{"position":{x:0,y:0,z:0}}},
+          {"target":{"position":{x:0,y:0,z:0}}}
+        ]
+      };
+      slidersUI.set_params(tunes)
+    });
+  };
+
+  const initSlidersUI = function(key){
+    const parent_id = "#"+key;
+    const set_params = function(params){
+      $(parent_id+" #position_x").val(params.position.x);
+      $(parent_id+" #position_y").val(params.position.y);
+      $(parent_id+" #position_z").val(params.position.z);
+      $(parent_id+" #rotation_x").val(params.rotation.x);
+      $(parent_id+" #rotation_y").val(params.rotation.y);
+      $(parent_id+" #rotation_z").val(params.rotation.z);
+      $(parent_id+" #leg0_position_x").val(params.legs[0].target.position.x);
+      $(parent_id+" #leg0_position_y").val(params.legs[0].target.position.y);
+      $(parent_id+" #leg0_position_z").val(params.legs[0].target.position.z);
+      $(parent_id+" #leg1_position_x").val(params.legs[1].target.position.x);
+      $(parent_id+" #leg1_position_y").val(params.legs[1].target.position.y);
+      $(parent_id+" #leg1_position_z").val(params.legs[1].target.position.z);
+      $(parent_id+" #leg2_position_x").val(params.legs[2].target.position.x);
+      $(parent_id+" #leg2_position_y").val(params.legs[2].target.position.y);
+      $(parent_id+" #leg2_position_z").val(params.legs[2].target.position.z);
+      $(parent_id+" #leg3_position_x").val(params.legs[3].target.position.x);
+      $(parent_id+" #leg3_position_y").val(params.legs[3].target.position.y);
+      $(parent_id+" #leg3_position_z").val(params.legs[3].target.position.z);
+      $(parent_id+" .slider").each((index, element)=>{
         update_text($(element));
-      })
-      cmd("dog.params", { "dog": dog }).then((response) => {
       });
+      const request = {};
+      request[key] = params;
+      cmd("dog.set_"+key, request).then((response) => {});
     }
 
     const update_text = function(slider){
       $("span", $(slider).parent()).text($(slider).val());
     }
-    $(".slider").each((index, element)=>{
+    $(parent_id+" .slider").each((index, element)=>{
       update_text($(element));
     })
 
-    $(".slider").on("input", function(){
+    $(parent_id+" .slider").on("input", function(){
       update_text($(this));
-      const dog = {
-        "position": [
-          parseInt($("#position_x").val()),
-          parseInt($("#position_y").val()),
-          parseInt($("#position_z").val())
-        ],
-        "rotation": [
-          parseInt($("#rotation_x").val()) * D2R,
-          parseInt($("#rotation_y").val()) * D2R,
-          parseInt($("#rotation_z").val()) * D2R
-        ],
-        "legs":[
-          {"position":[
-            parseInt($("#leg0_position_x").val()),
-            parseInt($("#leg0_position_y").val()),
-            parseInt($("#leg0_position_z").val())
-          ]},
-          {"position":[
-            parseInt($("#leg1_position_x").val()),
-            parseInt($("#leg1_position_y").val()),
-            parseInt($("#leg1_position_z").val())
-          ]},
-          {"position":[
-            parseInt($("#leg2_position_x").val()),
-            parseInt($("#leg2_position_y").val()),
-            parseInt($("#leg2_position_z").val())
-          ]},
-          {"position":[
-            parseInt($("#leg3_position_x").val()),
-            parseInt($("#leg3_position_y").val()),
-            parseInt($("#leg3_position_z").val())
-          ]}
+      const params = {
+        "position": {
+          x: parseFloat($(parent_id+" #position_x").val()),
+          y: parseFloat($(parent_id+" #position_y").val()),
+          z: parseFloat($(parent_id+" #position_z").val())
+        },
+        "rotation": {
+          x: parseFloat($(parent_id+" #rotation_x").val()) * D2R,
+          y: parseFloat($(parent_id+" #rotation_y").val()) * D2R,
+          z: parseFloat($(parent_id+" #rotation_z").val()) * D2R
+        },
+        "legs": [
+          {"target":{"position":{
+            x: parseFloat($(parent_id+" #leg0_position_x").val()),
+            y: parseFloat($(parent_id+" #leg0_position_y").val()),
+            z: parseFloat($(parent_id+" #leg0_position_z").val())
+          }}},
+          {"target":{"position":{
+            x: parseFloat($(parent_id+" #leg1_position_x").val()),
+            y: parseFloat($(parent_id+" #leg1_position_y").val()),
+            z: parseFloat($(parent_id+" #leg1_position_z").val())
+          }}},
+          {"target":{"position":{
+            x: parseFloat($(parent_id+" #leg2_position_x").val()),
+            y: parseFloat($(parent_id+" #leg2_position_y").val()),
+            z: parseFloat($(parent_id+" #leg2_position_z").val())
+          }}},
+          {"target":{"position":{
+            x: parseFloat($(parent_id+" #leg3_position_x").val()),
+            y: parseFloat($(parent_id+" #leg3_position_y").val()),
+            z: parseFloat($(parent_id+" #leg3_position_z").val())
+          }}}
         ]
       };
-      queued_dog_params_cmd.dog = dog;
+      queued_cmd.params = params;
     });
-    let = queued_dog_params_cmd = {dog: null, busy: false};
-    setInterval(()=>{
-      if(!queued_dog_params_cmd.busy && queued_dog_params_cmd.dog){
-        cmd("dog.params", { "dog": queued_dog_params_cmd.dog }).then((response) => {
+    let queued_cmd = {params: null, busy: false};
+    setInterval(function(){
+      if(!queued_cmd.busy && queued_cmd.params){
+        const request = {};
+        request[key] = queued_cmd.params;
+        cmd("dog.set_"+key, request).then((response) => {
           console.log(response);
-          queued_dog_params_cmd.busy = false;
+          queued_cmd.busy = false;
         });
-        queued_dog_params_cmd.busy = true;
-        queued_dog_params_cmd.dog = null;
+        queued_cmd.busy = true;
+        queued_cmd.params = null;
       }
     }, 1);
+
+    return {
+      set_params: set_params
+    }
   };
 
   const initCalibrationUI = function(){
@@ -301,6 +362,45 @@
       }
     });
 
+    $("#calibration .preset button").click(function(){
+      var v = $(this).attr("v");
+      if(v=="test0"){
+        cmd("dog.servo.set_leg_angles", {leg_number: 0, angle1:  0, angle2:  0, angle3: 0}).then((response)=>{});
+        cmd("dog.servo.set_leg_angles", {leg_number: 1, angle1:  0, angle2:  0, angle3: 0}).then((response)=>{});
+        cmd("dog.servo.set_leg_angles", {leg_number: 2, angle1:  0, angle2:  0, angle3: 0}).then((response)=>{});
+        cmd("dog.servo.set_leg_angles", {leg_number: 3, angle1:  0, angle2:  0, angle3: 0}).then((response)=>{});
+      }
+      if(v=="test1"){
+        cmd("dog.servo.set_leg_angles", {leg_number: 0, angle1:  0, angle2:  0, angle3: 90}).then((response)=>{});
+        cmd("dog.servo.set_leg_angles", {leg_number: 1, angle1:  0, angle2:  0, angle3: 90}).then((response)=>{});
+        cmd("dog.servo.set_leg_angles", {leg_number: 2, angle1:  0, angle2:  0, angle3: 90}).then((response)=>{});
+        cmd("dog.servo.set_leg_angles", {leg_number: 3, angle1:  0, angle2:  0, angle3: 90}).then((response)=>{});
+      }
+      if(v=="test2"){
+        cmd("dog.servo.set_leg_angles", {leg_number: 0, angle1:  0, angle2: 45, angle3: 90}).then((response)=>{});
+        cmd("dog.servo.set_leg_angles", {leg_number: 1, angle1:  0, angle2: 45, angle3: 90}).then((response)=>{});
+        cmd("dog.servo.set_leg_angles", {leg_number: 2, angle1:  0, angle2: 45, angle3: 90}).then((response)=>{});
+        cmd("dog.servo.set_leg_angles", {leg_number: 3, angle1:  0, angle2: 45, angle3: 90}).then((response)=>{});
+      }
+      if(v=="test3"){
+        cmd("dog.servo.set_leg_angles", {leg_number: 0, angle1:  0, angle2: 45, angle3:  0}).then((response)=>{});
+        cmd("dog.servo.set_leg_angles", {leg_number: 1, angle1:  0, angle2: 45, angle3:  0}).then((response)=>{});
+        cmd("dog.servo.set_leg_angles", {leg_number: 2, angle1:  0, angle2: 45, angle3:  0}).then((response)=>{});
+        cmd("dog.servo.set_leg_angles", {leg_number: 3, angle1:  0, angle2: 45, angle3:  0}).then((response)=>{});
+      }
+      if(v=="test4"){
+        cmd("dog.servo.set_leg_angles", {leg_number: 0, angle1:-20, angle2:  0, angle3: 90}).then((response)=>{});
+        cmd("dog.servo.set_leg_angles", {leg_number: 1, angle1:-20, angle2:  0, angle3: 90}).then((response)=>{});
+        cmd("dog.servo.set_leg_angles", {leg_number: 2, angle1:-20, angle2:  0, angle3: 90}).then((response)=>{});
+        cmd("dog.servo.set_leg_angles", {leg_number: 3, angle1:-20, angle2:  0, angle3: 90}).then((response)=>{});
+      }
+      if(v=="test5"){
+        cmd("dog.servo.set_leg_angles", {leg_number: 0, angle1: 20, angle2:  0, angle3: 90}).then((response)=>{});
+        cmd("dog.servo.set_leg_angles", {leg_number: 1, angle1: 20, angle2:  0, angle3: 90}).then((response)=>{});
+        cmd("dog.servo.set_leg_angles", {leg_number: 2, angle1: 20, angle2:  0, angle3: 90}).then((response)=>{});
+        cmd("dog.servo.set_leg_angles", {leg_number: 3, angle1: 20, angle2:  0, angle3: 90}).then((response)=>{});
+      }
+    });
   }
 
 </script>
@@ -312,86 +412,129 @@
 </div>
 
 <div>
-  <button class="motion" name="default" args='{}'          >default</button>
-  <button class="motion" name="dance"   args='{}'          >dance</button>
-  <button class="motion" name="walk"    args='{}'          >walk</button>
-  <button class="motion" name="step"    args='{"speed":2.0,"dog_x": -5,"dog_z": 0}'>step</button>
-  <button class="motion" name="step"    args='{"speed":3.0,"dog_x": -6,"dog_z": 0}'>step</button>
-  <button class="motion" name="step"    args='{"speed":1.5,"dog_x": -7,"dog_z": 0}'>step</button>
-  <button class="motion" name="step"    args='{"speed":1.5,"dog_x": -8,"dog_z": 0}'>step</button>
+  <button class="motion" name="default" args='{}'>default</button>
+  <button class="motion" name="dance"   args='{}'>dance</button>
+  <button class="motion" name="walk"    args='{}'>walk</button>
+  <button class="motion" name="step"    args='{}'>step</button>
   <button class="motion" name="STOP"    args='{}'>STOP</button>
+
+  <input id="motion_speed" type="range" min="0.01", value="1.0" max="3.0" step="0.01">
 </div>
 
-<div>
-  <button class="params a">a</button>
-  <button class="params b">b</button>
-  <button class="params c">c</button>
+
+
+<div id="tunes" class="sliders">
+  <h3>tunes</h3>
+  <div class="preset">
+    <button v="zero">zero</button>
+  </div>
+  <div>
+    <h4>position:</h4>
+    <label>X:<span></span><input id="position_x" class="slider" type="range" step="0.1" value="0" min="-20" max="20"></label>
+    <label>Y:<span></span><input id="position_y" class="slider" type="range" step="0.1" value="0" min="-20" max="20"></label>
+    <label>Z:<span></span><input id="position_z" class="slider" type="range" step="0.1" value="0" min="-20" max="20"></label>
+  </div>
+  <div>
+    <h4>rotation:</h4>
+    <label>X:<span></span><input id="rotation_x" class="slider" type="range" step="0.1" value="0" min="-20" max="20"></label>
+    <label>Y:<span></span><input id="rotation_y" class="slider" type="range" step="0.1" value="0" min="-20" max="20"></label>
+    <label>Z:<span></span><input id="rotation_z" class="slider" type="range" step="0.1" value="0" min="-20" max="20"></label>
+  </div>
+  <div>
+    <h4>leg[0]:</h4>
+    <label>X:<span></span><input id="leg0_position_x" class="slider" type="range" step="0.1" value="0" min="-20" max="20"></label>
+    <label>Y:<span></span><input id="leg0_position_y" class="slider" type="range" step="0.1" value="0" min="-20" max="20"></label>
+    <label>Z:<span></span><input id="leg0_position_z" class="slider" type="range" step="0.1" value="0" min="-20" max="20"></label>
+  </div>
+  <div>
+    <h4>leg[1]:</h4>
+    <label>X:<span></span><input id="leg1_position_x" class="slider" type="range" step="0.1" value="0" min="-20" max="20"></label>
+    <label>Y:<span></span><input id="leg1_position_y" class="slider" type="range" step="0.1" value="0" min="-20" max="20"></label>
+    <label>Z:<span></span><input id="leg1_position_z" class="slider" type="range" step="0.1" value="0" min="-20" max="20"></label>
+  </div>
+  <div>
+    <h4>leg[2]:</h4>
+    <label>X:<span></span><input id="leg2_position_x" class="slider" type="range" step="0.1" value="0" min="-20" max="20"></label>
+    <label>Y:<span></span><input id="leg2_position_y" class="slider" type="range" step="0.1" value="0" min="-20" max="20"></label>
+    <label>Z:<span></span><input id="leg2_position_z" class="slider" type="range" step="0.1" value="0" min="-20" max="20"></label>
+  </div>
+  <div>
+    <h4>leg[3]:</h4>
+    <label>X:<span></span><input id="leg3_position_x" class="slider" type="range" step="0.1" value="0" min="-20" max="20"></label>
+    <label>Y:<span></span><input id="leg3_position_y" class="slider" type="range" step="0.1" value="0" min="-20" max="20"></label>
+    <label>Z:<span></span><input id="leg3_position_z" class="slider" type="range" step="0.1" value="0" min="-20" max="20"></label>
+  </div>
 </div>
 
 <style>
-  #params h4{
+  .sliders h4{
     display: inline-block;
     width: 120px;
     margin: 0px;
   }
-  #params div{
+  .sliders div{
     padding: 2px;
     margin: 0px;
     border: 1px solid black;
   }
-  #params label{
+  .sliders label{
     display: inline-block;
     width: 300px;
     margin: 0px;
   }
-  #params label input[type=range]{
+  .sliders label input[type=range]{
     width: 200px;
     margin: 0px;
   }
-  #params label span{
+  .sliders label span{
     display: inline-block;
     width: 30px;
     margin: 0px;
   }
 </style>
 
-<div id="params">
+<div id="params" class="sliders">
   <h3>params</h3>
+  <div class="preset">
+    <button v="a">a</button>
+    <button v="b">b</button>
+    <button v="c">c</button>
+  </div>
   <div>
     <h4>position:</h4>
-    <label>X:<span></span><input id="position_x" class="slider" type="range" step="0.1" value="0"  min="-30" max="30"></label>
-    <label>Y:<span></span><input id="position_y" class="slider" type="range" step="0.1" value="65" min="10" max="75"></label>
-    <label>Z:<span></span><input id="position_z" class="slider" type="range" step="0.1" value="0"  min="-30" max="30"></label>
+    <label>X:<span></span><input id="position_x" class="slider" type="range" step="0.1" value="" min="-30" max="30"></label>
+    <label>Y:<span></span><input id="position_y" class="slider" type="range" step="0.1" value="" min="10"  max="75"></label>
+    <label>Z:<span></span><input id="position_z" class="slider" type="range" step="0.1" value="" min="-30" max="30"></label>
   </div>
   <div>
     <h4>rotation:</h4>
-    <label>X:<span></span><input id="rotation_x" class="slider" type="range" step="0.1" value="0" min="-45" max="45"></label>
-    <label>Y:<span></span><input id="rotation_y" class="slider" type="range" step="0.1" value="0" min="-45" max="45"></label>
-    <label>Z:<span></span><input id="rotation_z" class="slider" type="range" step="0.1" value="0" min="-45" max="45"></label>
+    <label>X:<span></span><input id="rotation_x" class="slider" type="range" step="0.1" value="" min="-45" max="45"></label>
+    <label>Y:<span></span><input id="rotation_y" class="slider" type="range" step="0.1" value="" min="-45" max="45"></label>
+    <label>Z:<span></span><input id="rotation_z" class="slider" type="range" step="0.1" value="" min="-45" max="45"></label>
   </div>
   <div>
     <h4>leg[0]:</h4>
-    <label>X:<span></span><input id="leg0_position_x" class="slider" type="range" step="0.1" value="45"  min="15" max="75"></label>
-    <label>Y:<span></span><input id="leg0_position_y" class="slider" type="range" step="0.1" value="0"   min="0" max="60"></label>
-    <label>Z:<span></span><input id="leg0_position_z" class="slider" type="range" step="0.1" value="-40" min="-80" max="-20"></label>
+    <label>X:<span></span><input id="leg0_position_x" class="slider" type="range" step="0.1" value="" min="-15" max="45"></label>
+    <label>Y:<span></span><input id="leg0_position_y" class="slider" type="range" step="0.1" value="" min="0"   max="60"></label>
+    <label>Z:<span></span><input id="leg0_position_z" class="slider" type="range" step="0.1" value="" min="-80" max="-20"></label>
   </div>
   <div>
     <h4>leg[1]:</h4>
-    <label>X:<span></span><input id="leg1_position_x" class="slider" type="range" step="0.1" value="45"  min="15" max="75"></label>
-    <label>Y:<span></span><input id="leg1_position_y" class="slider" type="range" step="0.1" value="0"   min="0" max="60"></label>
-    <label>Z:<span></span><input id="leg1_position_z" class="slider" type="range" step="0.1" value="40"  min="20" max="80"></label>
+    <label>X:<span></span><input id="leg1_position_x" class="slider" type="range" step="0.1" value="" min="-15" max="45"></label>
+    <label>Y:<span></span><input id="leg1_position_y" class="slider" type="range" step="0.1" value="" min="0"   max="60"></label>
+    <label>Z:<span></span><input id="leg1_position_z" class="slider" type="range" step="0.1" value="" min="20"  max="80"></label>
   </div>
   <div>
     <h4>leg[2]:</h4>
-    <label>X:<span></span><input id="leg2_position_x" class="slider" type="range" step="0.1" value="-90" min="-120" max="-60"></label>
-    <label>Y:<span></span><input id="leg2_position_y" class="slider" type="range" step="0.1" value="0"   min="0" max="60"></label>
-    <label>Z:<span></span><input id="leg2_position_z" class="slider" type="range" step="0.1" value="-40" min="-80" max="-20"></label>
+    <label>X:<span></span><input id="leg2_position_x" class="slider" type="range" step="0.1" value="" min="-120" max="-60"></label>
+    <label>Y:<span></span><input id="leg2_position_y" class="slider" type="range" step="0.1" value="" min="0"    max="60"></label>
+    <label>Z:<span></span><input id="leg2_position_z" class="slider" type="range" step="0.1" value="" min="-80"  max="-20"></label>
   </div>
   <div>
     <h4>leg[3]:</h4>
-    <label>X:<span></span><input id="leg3_position_x" class="slider" type="range" step="0.1" value="-90" min="-120" max="-60"></label>
-    <label>Y:<span></span><input id="leg3_position_y" class="slider" type="range" step="0.1" value="0"   min="0" max="60"></label>
-    <label>Z:<span></span><input id="leg3_position_z" class="slider" type="range" step="0.1" value="40"  min="20" max="80"></label>
+    <label>X:<span></span><input id="leg3_position_x" class="slider" type="range" step="0.1" value="" min="-120" max="-60"></label>
+    <label>Y:<span></span><input id="leg3_position_y" class="slider" type="range" step="0.1" value="" min="0"    max="60"></label>
+    <label>Z:<span></span><input id="leg3_position_z" class="slider" type="range" step="0.1" value="" min="20"   max="80"></label>
   </div>
 </div>
 
@@ -426,6 +569,14 @@
 
 <div id="calibration">
   <h3>calibration</h3>
+  <div class="preset">
+    <button v="test0">test0</button>
+    <button v="test1">test1</button>
+    <button v="test2">test2</button>
+    <button v="test3">test3</button>
+    <button v="test4">test4</button>
+    <button v="test5">test5</button>
+  </div>
   <div>
     <h4>servo_number:</h4>
     <label>

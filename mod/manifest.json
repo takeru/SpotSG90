@@ -6,6 +6,9 @@
 	  "$(MODDABLE)/examples/manifest_net.json",
 	  "$(MODDABLE)/modules/network/mdns/manifest.json"
 	],
+	"creation": {
+		"static": 65536
+	},
 	"modules": {
 		"dog": "./dog",
 		"three-math": "./three-math",
@@ -27,6 +30,7 @@
 		"three-math",
 		"ik",
 		"motion",
+		"servo",
 		"websocket",
 		"base64",
 		"digest",

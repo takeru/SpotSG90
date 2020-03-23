@@ -61,39 +61,73 @@ const Motion = function () {
   }
 
   this.step = function (t, dog, args) {
-    t = t * args.speed;
-    dog.position.x = args.dog_x;
+    dog.position.x =  0;
     dog.position.y = 65;
-    dog.position.z = args.dog_z;
+    dog.position.z =  0;
     dog.rotation.x =  0;
     dog.rotation.y =  0;
     dog.rotation.z =  0;
     for (let leg_number = 0; leg_number < 4; leg_number++) {
-      dog.legs[leg_number].target.position.x = leg_number < 2      ?  45 : -90;
+      dog.legs[leg_number].target.position.x = leg_number < 2      ?  15 : -90;
       dog.legs[leg_number].target.position.y = 0;
-      dog.legs[leg_number].target.position.z = leg_number % 2 == 0 ? -50 :  50;
+      dog.legs[leg_number].target.position.z = leg_number % 2 == 0 ? -30 :  30;
     }
 
     const n = Math.floor(t/1000) % 4;
+    let m0 = (Math.floor(t) +   0) % 1000 / 1000.0;
+    let m1 = 1.0-m0;
     switch(n){
+      case 0:
+        dog.legs[0].target.position.y  =  15 * m0;
+        dog.legs[1].target.position.y  =   0 * m0;
+        dog.legs[2].target.position.y  =   0 * m0;
+        dog.legs[3].target.position.y  =  15 * m0;
+
+        dog.legs[0].target.position.x +=  -5 * m1;
+        dog.legs[1].target.position.x +=   5 * m1;
+        dog.legs[2].target.position.x +=   5 * m1;
+        dog.legs[3].target.position.x +=  -5 * m1;
+        break;
       case 1:
-        dog.legs[0].target.position.y = 15;
-        dog.legs[1].target.position.y = -5;
-        dog.legs[2].target.position.y = -5;
-        dog.legs[3].target.position.y = 15;
+        dog.legs[0].target.position.y  =  15 * m1;
+        dog.legs[1].target.position.y  =   0 * m0;
+        dog.legs[2].target.position.y  =   0 * m0;
+        dog.legs[3].target.position.y  =  15 * m1;
+
+        dog.legs[0].target.position.x +=   5 * m0;
+        dog.legs[1].target.position.x +=  -5 * m0;
+        dog.legs[2].target.position.x +=  -5 * m0;
+        dog.legs[3].target.position.x +=   5 * m0;
+        break;
+      case 2:
+        dog.legs[1].target.position.y  =  15 * m0;
+        dog.legs[0].target.position.y  =   0 * m0;
+        dog.legs[3].target.position.y  =   0 * m0;
+        dog.legs[2].target.position.y  =  15 * m0;
+
+        dog.legs[1].target.position.x +=  -5 * m1;
+        dog.legs[0].target.position.x +=   5 * m1;
+        dog.legs[3].target.position.x +=   5 * m1;
+        dog.legs[2].target.position.x +=  -5 * m1;
         break;
       case 3:
-        dog.legs[0].target.position.y = -5;
-        dog.legs[1].target.position.y = 15;
-        dog.legs[2].target.position.y = 15;
-        dog.legs[3].target.position.y = -5;
+        dog.legs[1].target.position.y  =  15 * m1;
+        dog.legs[0].target.position.y  =   0 * m0;
+        dog.legs[3].target.position.y  =   0 * m0;
+        dog.legs[2].target.position.y  =  15 * m1;
+
+        dog.legs[1].target.position.x +=   5 * m0;
+        dog.legs[0].target.position.x +=  -5 * m0;
+        dog.legs[3].target.position.x +=  -5 * m0;
+        dog.legs[2].target.position.x +=   5 * m0;
         break;
     }
   }
 
   this.default = function(t, dog){
-    this.dance(t, dog);
+    //this.dance(t, dog);
     //this.walk(t, dog);
+    this.step(t, dog);
   }
 };
 

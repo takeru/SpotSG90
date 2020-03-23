@@ -32,22 +32,32 @@ const Dog = function () {
     position: new THREE.Vector3(),
     rotation: new THREE.Euler(),
     legs: [
-      makeLeg(true, true, [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 38.5, 22, -40, 1]),
-      makeLeg(true, false, [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 38.5, 22, 40, 1]),
+      makeLeg(true, true, [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 8.5, 22, -40, 1]),
+      makeLeg(true, false, [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 8.5, 22, 40, 1]),
       makeLeg(false, true, [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, -91.5, 22, -40, 1]),
       makeLeg(false, false, [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, -91.5, 22, 40, 1])
     ]
   };
 
-  let motion_name = null;
-  let motion_args = null;
+  let motion_params = null;
   let count = 0;
+  const start_motion = function(name, speed, args){
+    motion_params = {name: name, speed: speed, args: args, prev_ticks: Time.ticks, t: 0};
+  }
+  const set_motion_speed = function(speed){
+    motion_params.speed = speed;
+  }
+
   Timer.repeat(() => {
-    if(motion_name && motion[motion_name]){
+    if(motion_params && motion_params.name && motion[motion_params.name]){
       Digital.write(10, (count / 100) & 1);
-      const t = Time.ticks;
-      motion[motion_name](t, dog, motion_args);
+
+      const ticks = Time.ticks;
+      motion_params.t += (ticks-motion_params.prev_ticks)*motion_params.speed;
+      motion[motion_params.name](motion_params.t, dog, motion_params);
       set_all_legs_angles();
+      motion_params.prev_ticks = ticks;
+
       count++;
     }
   }, 25);
@@ -81,31 +91,36 @@ const Dog = function () {
   //   }
   // }, 1000);
 
-  this.set_params = function(_dog){
-    /*
-    const before = {
+  this.set_params = function(params){
+    dog.position.x = params.position.x;
+    dog.position.y = params.position.y;
+    dog.position.z = params.position.z;
+    dog.rotation.x = params.rotation.x;
+    dog.rotation.y = params.rotation.y;
+    dog.rotation.z = params.rotation.z;
+    for(let i=0; i<4; i++){
+      dog.legs[i].target.position.x = params.legs[i].target.position.x;
+      dog.legs[i].target.position.y = params.legs[i].target.position.y;
+      dog.legs[i].target.position.z = params.legs[i].target.position.z;
+    }
+    set_all_legs_angles();
+    return {
       "dog": {
-        "position": dog.position.toArray(),
-        "rotation": dog.rotation.toArray(),
         "legs": [
-          dog.legs[0].target.position.toArray(),
-          dog.legs[1].target.position.toArray(),
-          dog.legs[2].target.position.toArray(),
-          dog.legs[3].target.position.toArray()
+          {"angles": dog.legs[0].angles},
+          {"angles": dog.legs[1].angles},
+          {"angles": dog.legs[2].angles},
+          {"angles": dog.legs[3].angles}
         ]
       }
-    }*/
+    }
+  }
 
-    dog.position.x = _dog.position[0];
-    dog.position.y = _dog.position[1];
-    dog.position.z = _dog.position[2];
-    dog.rotation.x = _dog.rotation[0];
-    dog.rotation.y = _dog.rotation[1];
-    dog.rotation.z = _dog.rotation[2];
+  this.set_tunes = function(tunes){
+    dog.position.tune = tunes.position;
+    dog.rotation.tune = tunes.rotation;
     for(let i=0; i<4; i++){
-      dog.legs[i].target.position.x = _dog.legs[i].position[0];
-      dog.legs[i].target.position.y = _dog.legs[i].position[1];
-      dog.legs[i].target.position.z = _dog.legs[i].position[2];
+      dog.legs[i].target.position.tune = tunes.legs[i].target.position;
     }
     set_all_legs_angles();
     return {
@@ -133,12 +148,18 @@ const Dog = function () {
       return {"result": "OK"};
     }
     if(cmd=="dog.motion"){
-      motion_name = request.name;
-      motion_args = request.args;
+      start_motion(request.name, request.speed, request.args);
       return {"result": "OK"};
     }
-    if(cmd=="dog.params"){
-      return this.set_params(request.dog);
+    if(cmd=="dog.set_motion_speed"){
+      set_motion_speed(request.speed);
+      return {"result": "OK"};
+    }
+    if(cmd=="dog.set_params"){
+      return this.set_params(request.params);
+    }
+    if(cmd=="dog.set_tunes"){
+      return this.set_tunes(request.tunes);
     }
     if (cmd.startsWith("dog.servo.")) {
       return servo.cmd(cmd, request);

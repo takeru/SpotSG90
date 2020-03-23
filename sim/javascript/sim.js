@@ -26,6 +26,7 @@ const Sim = function () {
   const BACKBONE_W = 157;
   const BACKBONE_H = 5;
   const BACKBONE_D = 27;
+  const SHOULDER_OFFSET = -30;
   const SHOULDER_W = 27;
   const SHOULDER_H = 5;
   const SHOULDER_D = 96;
@@ -194,7 +195,7 @@ const Sim = function () {
     }
 
     const shoulder = new THREE.Mesh(new THREE.BoxGeometry(SHOULDER_W, SHOULDER_H, SHOULDER_D), blue2Material);
-    shoulder.position.set(((BACKBONE_W - SHOULDER_W) / 2), -(BACKBONE_H + SHOULDER_H) / 2, 0);
+    shoulder.position.set(((BACKBONE_W - SHOULDER_W) / 2)+SHOULDER_OFFSET, -(BACKBONE_H + SHOULDER_H) / 2, 0);
     backbone.add(shoulder);
 
     const waist = new THREE.Mesh(new THREE.BoxGeometry(WAIST_W, WAIST_H, WAIST_D), blue3Material);
