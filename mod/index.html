@@ -362,6 +362,17 @@
       }
     });
 
+    $("button.test_pulse_width_all").click(async function(){
+      var v = $(this).attr("v");
+      const ss = v.split(',');
+      for(let i=0; i<ss.length; i++){
+        const s = ss[i];
+        var servo_number, pulse_width;
+        [servo_number, pulse_width] = s.split("=").map(x=>parseInt(x.trim()));
+        await cmd("dog.servo.set_pulse_width", {servo_number: servo_number, pulse_width: pulse_width});
+      }
+    });
+
     $("#calibration .preset button").click(function(){
       var v = $(this).attr("v");
       if(v=="test0"){
@@ -636,7 +647,11 @@
   <div>
     <h4>test:</h4>
     <div>
-      pulse_width:<input type="text" name="test_pulse_width">
+      <button class="test_pulse_width_all" v="0=2000,1=2000,2= 750, 3=1000,4=1000,5=2250, 6=2000,7=2000,8= 750, 9=1000,10=1000,11=2250">ALL:initial</button>
+      <button class="test_pulse_width_all" v="0=1500,1=1500,2=1500, 3=1500,4=1500,5=1500, 6=1500,7=1500,8=1500, 9=1500,10=1500,11=1500">ALL:center(1500)</button>
+    </div>
+    <div>
+        pulse_width:<input type="text" name="test_pulse_width">
       <button class="test_pulse_width" v="">test</button>
       <button class="test_pulse_width" v="1000">1000</button>
       <button class="test_pulse_width" v="1500">1500</button>
