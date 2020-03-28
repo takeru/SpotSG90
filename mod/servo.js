@@ -80,21 +80,23 @@ export default class Servo {
 const calibration_data = [
   {
     servo_number: 0, // A-1
-    angle0:  0, pulse_width0: 2000,
-    angle1: 90, pulse_width1: 1000,
+    angle0:  0, pulse_width0: 1965,
+    angle1: 30, pulse_width1: 1640,
     angle_min: -30,
     angle_max:  45
   },
+  //-------------------------------------
   {
     servo_number: 1, // A-2
-    angle0:  0, pulse_width0: 2000,
-    angle1: 90, pulse_width1: 1000,
-    angle_min: -9,
-    angle_max: 90
+    angle0:  0, pulse_width0: 1900,
+    angle1: 45, pulse_width1: 1395,
+    angle_min:  -9,
+    angle_max:  90
   },
+  //-------------------------------------
   {
     servo_number: 2, // A-3
-    angle0: 0, pulse_width0:   750,
+    angle0:  0, pulse_width0:  700,
     angle1: 90, pulse_width1: 1750,
     angle_min: -30,
     angle_max:  90
@@ -102,67 +104,74 @@ const calibration_data = [
   //-------------------------------------
   {
     servo_number: 3, // B-1
-    angle0:  0, pulse_width0: 1000,
-    angle1: 90, pulse_width1: 2000,
+    angle0:  0, pulse_width0:  900,
+    angle1: 30, pulse_width1: 1215,
     angle_min: -30,
     angle_max:  45
   },
+  //-------------------------------------
   {
     servo_number: 4, // B-2
     angle0:  0, pulse_width0: 1000,
-    angle1: 90, pulse_width1: 2000,
-    angle_min: -9,
-    angle_max: 90
+    angle1: 45, pulse_width1: 1525,
+    angle_min:  -9,
+    angle_max:  90
   },
+  //-------------------------------------
   {
     servo_number: 5, // B-3
-    angle0:  0, pulse_width0: 2250,
-    angle1: 90, pulse_width1: 1250,
+    angle0:  0, pulse_width0: 2320,
+    angle1: 90, pulse_width1: 1270,
     angle_min: -30,
     angle_max:  90
   },
   //-------------------------------------
   {
     servo_number: 6, // C-1
-    angle0:  0, pulse_width0: 2000,
-    angle1: 90, pulse_width1: 1000,
+    angle0:  0, pulse_width0: 2080,
+    angle1: 30, pulse_width1: 1740,
     angle_min: -30,
     angle_max:  45
   },
+  //-------------------------------------
   {
     servo_number: 7, // C-2
-    angle0:  0, pulse_width0: 2000,
-    angle1: 90, pulse_width1: 1000,
-    angle_min: -9,
-    angle_max: 90
+    angle0:  0, pulse_width0: 1965,
+    angle1: 45, pulse_width1: 1360,
+    angle_min:  -9,
+    angle_max:  90
   },
+  //-------------------------------------
   {
     servo_number: 8, // C-3
-    angle0:  0, pulse_width0:   750,
-    angle1: 90, pulse_width1: 1750,
+    angle0:  0, pulse_width0:  700,
+    angle1: 90, pulse_width1: 1675,
     angle_min: -30,
     angle_max:  90
   },
   //-------------------------------------
   {
     servo_number: 9, // D-1
-    angle0:  0, pulse_width0: 1000,
-    angle1: 90, pulse_width1: 2000,
+    angle0:  0, pulse_width0:  920,
+    angle1: 30, pulse_width1: 1235,
     angle_min: -30,
     angle_max:  45
   },
+  //-------------------------------------
   {
     servo_number: 10, // D-2
     angle0:  0, pulse_width0: 1000,
-    angle1: 90, pulse_width1: 2000,
-    angle_min: -9,
-    angle_max: 90
+    angle1: 45, pulse_width1: 1595,
+    angle_min:  -9,
+    angle_max:  90
   },
+  //-------------------------------------
   {
     servo_number: 11, // D-3
-    angle0:  0, pulse_width0: 2250,
-    angle1: 90, pulse_width1: 1250,
+    angle0:  0, pulse_width0: 2300,
+    angle1: 90, pulse_width1: 1200,
     angle_min: -30,
     angle_max:  90
   },
+  //-------------------------------------
 ];
