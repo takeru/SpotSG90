@@ -143,10 +143,10 @@
   }
 
   const initUI = function () {
-    $("#wakeup").click(function(){
+    $("button[v=wakeup]").click(function(){
       cmd("dog.wakeup");
     });
-    $("#sleep").click(function(){
+    $("button[v=sleep]").click(function(){
       cmd("dog.sleep");
     });
 
@@ -156,11 +156,26 @@
         name = current_motion["name"];
       }
       if(!args && name=="step"){
+        const h  = parseFloat($(".step-args input[name=H]").val());
+        const w  = parseFloat($(".step-args input[name=W]").val());
+        const lr = parseFloat($(".step-args input[name=LR]").val());
+        let lb = w;
+        let rb = w;
+        if(lr<0){
+          lb = w * (1+lr);
+        }else if(0<lr){
+          rb = w * (1-lr);
+        }
+
         args = {
-          "LA": parseFloat($(".step-args input[name=LA]").val()),
-          "LB": parseFloat($(".step-args input[name=LB]").val()),
-          "RA": parseFloat($(".step-args input[name=RA]").val()),
-          "RB": parseFloat($(".step-args input[name=RB]").val())
+          "LA": h,
+          "RA": h,
+          "LB": lb,
+          "RB": rb
+          // "LA": parseFloat($(".step-args input[name=LA]").val()),
+          // "LB": parseFloat($(".step-args input[name=LB]").val()),
+          // "RA": parseFloat($(".step-args input[name=RA]").val()),
+          // "RB": parseFloat($(".step-args input[name=RB]").val())
         }
       }
       return { "name": name, "speed": parseFloat($("#motion_speed").val()), "args": args };
@@ -530,11 +545,12 @@
 <body>
 
 <div>
-  <button id="wakeup">Wakeup</button>
-  <button id="sleep">Sleep</button>
+  <button v="wakeup">Wakeup</button>
+  <button v="sleep">Sleep</button>
 </div>
 
 <div>
+  <h3>motion</h3>
   <button class="motion" name="default" args='{}'>default</button>
   <button class="motion" name="dance"   args='{}'>dance</button>
   <button class="motion" name="walk"    args='{}'>walk</button>
@@ -544,16 +560,16 @@
 
 
 <div>
+  <h3>motion:step</h3>
+  <button v="wakeup">Wakeup</button>
+  <button v="sleep">Sleep</button>
   <button class="motion" name="step">step</button>
-  <button class="motion" name="STOP"    args='{}'>STOP</button>
+  <button class="motion" name="STOP"'>STOP</button>
   <table class="step-args">
     <tr>
-      <td><input name="LA" type="range" step="0.1" value="10" min="0" max="40"></td>
-      <td><input name="LB" type="range" step="0.1" value="0" min="-40" max="40"></td>
-    </tr>
-    <tr>
-      <td><input name="RA" type="range" step="0.1" value="10" min="0" max="40"></td>
-      <td><input name="RB" type="range" step="0.1" value="0" min="-40" max="40"></td>
+      <td>H:<input name="H"  type="range" step="0.1"  value="10" min="0" max="40"></td>
+      <td>W:<input name="W"  type="range" step="0.1"  value="0" min="-40" max="40"></td>
+      <td>LR:<input name="LR" type="range" step="0.01" value="0" min="-1" max="1"></td>
     </tr>
   </table>
 </div>
