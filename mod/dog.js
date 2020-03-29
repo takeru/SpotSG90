@@ -6,15 +6,14 @@ import THREE from "three-math"
 import IK from 'ik'
 import Motion from 'motion'
 import Servo from "servo"
+import Const from "const";
 
 const Dog = function () {
   const ik = new IK(THREE);
   const motion = new Motion();
   const servo = new Servo();
-  const D2R = Math.PI / 180; // degree to radian
+  const D2R = Const.D2R;
 
-  const ARM2_H = 43;
-  const ARM3_H = 57;
   const makeLeg = function (front, left, ik_matrix4_array) {
     const leg = {
       target: {
@@ -23,8 +22,9 @@ const Dog = function () {
       ik_matrix4: new THREE.Matrix4().fromArray(ik_matrix4_array),
       left: left,
       front: front,
-      l1: ARM2_H,
-      l2: ARM3_H
+      l1: Const.L1,
+      l2: Const.L2,
+      l0: Const.L0
     };
     return leg;
   }
@@ -32,10 +32,14 @@ const Dog = function () {
     position: new THREE.Vector3(),
     rotation: new THREE.Euler(),
     legs: [
-      makeLeg(true, true, [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 8.5, 22, -40, 1]),
-      makeLeg(true, false, [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 8.5, 22, 40, 1]),
-      makeLeg(false, true, [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, -91.5, 22, -40, 1]),
-      makeLeg(false, false, [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, -91.5, 22, 40, 1])
+      // makeLeg(true, true, [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 8.5, 22, -40, 1]),
+      // makeLeg(true, false, [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 8.5, 22, 40, 1]),
+      // makeLeg(false, true, [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, -91.5, 22, -40, 1]),
+      // makeLeg(false, false, [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, -91.5, 22, 40, 1])
+      makeLeg(true, true, [1,0,0,0,0,-1,1.2246467991473532e-16,0,0,-1.2246467991473532e-16,-1,0,8.5,-22,-40,1]),
+      makeLeg(true, false, [1,0,0,0,0,-1,1.2246467991473532e-16,0,0,-1.2246467991473532e-16,-1,0,8.5,-22,40,1]),
+      makeLeg(false, true, [1,0,0,0,0,-1,1.2246467991473532e-16,0,0,-1.2246467991473532e-16,-1,0,-91.5,-22,-40,1]),
+      makeLeg(false, false, [1,0,0,0,0,-1,1.2246467991473532e-16,0,0,-1.2246467991473532e-16,-1,0,-91.5,-22,40,1])
     ]
   };
 
@@ -44,8 +48,11 @@ const Dog = function () {
   const start_motion = function(name, speed, args){
     motion_params = {name: name, speed: speed, args: args, prev_ticks: Time.ticks, t: 0};
   }
-  const set_motion_speed = function(speed){
+  const update_motion = function(speed, args){
     motion_params.speed = speed;
+    if(args){
+      motion_params.args  = args;
+    }
   }
 
   Timer.repeat(() => {
@@ -54,7 +61,7 @@ const Dog = function () {
 
       const ticks = Time.ticks;
       motion_params.t += (ticks-motion_params.prev_ticks)*motion_params.speed;
-      motion[motion_params.name](motion_params.t, dog, motion_params);
+      motion[motion_params.name](motion_params.t, dog, motion_params.args);
       set_all_legs_angles();
       motion_params.prev_ticks = ticks;
 
@@ -151,8 +158,8 @@ const Dog = function () {
       start_motion(request.name, request.speed, request.args);
       return {"result": "OK"};
     }
-    if(cmd=="dog.set_motion_speed"){
-      set_motion_speed(request.speed);
+    if(cmd=="dog.update_motion"){
+      update_motion(request.speed, request.args);
       return {"result": "OK"};
     }
     if(cmd=="dog.set_params"){

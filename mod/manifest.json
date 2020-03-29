@@ -17,6 +17,7 @@
 		"servo": "./servo",
 		"secret": "./secret",
 		"ws_server": "./ws_server",
+		"const": "./const",
 		"*": [
 			"./main",
 			"$(MODULES)/network/websocket/*",
@@ -31,6 +32,7 @@
 		"ik",
 		"motion",
 		"servo",
+		"const",
 		"websocket",
 		"base64",
 		"digest",

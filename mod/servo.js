@@ -22,6 +22,7 @@ export default class Servo {
 
   set_leg_angles(leg_number, angle1, angle2, angle3) {
     const angles = [angle1, angle2, angle3];
+    //trace(`leg_number=${leg_number} angle1=${angle1} angle2=${angle2} angle3=${angle3}\n`);
     for (let n = 0; n < 3; n++) {
       const servo_number = leg_number * 3 + n;
       let a = angles[n];
@@ -96,10 +97,10 @@ const calibration_data = [
   //-------------------------------------
   {
     servo_number: 2, // A-3
-    angle0:  0, pulse_width0:  700,
+    angle0:  0, pulse_width0:  715,
     angle1: 90, pulse_width1: 1750,
     angle_min: -30,
-    angle_max:  90
+    angle_max: 135
   },
   //-------------------------------------
   {
@@ -123,7 +124,7 @@ const calibration_data = [
     angle0:  0, pulse_width0: 2320,
     angle1: 90, pulse_width1: 1270,
     angle_min: -30,
-    angle_max:  90
+    angle_max: 135
   },
   //-------------------------------------
   {
@@ -136,7 +137,7 @@ const calibration_data = [
   //-------------------------------------
   {
     servo_number: 7, // C-2
-    angle0:  0, pulse_width0: 1965,
+    angle0:  0, pulse_width0: 1980,
     angle1: 45, pulse_width1: 1360,
     angle_min:  -9,
     angle_max:  90
@@ -144,10 +145,10 @@ const calibration_data = [
   //-------------------------------------
   {
     servo_number: 8, // C-3
-    angle0:  0, pulse_width0:  700,
+    angle0:  0, pulse_width0:  690,
     angle1: 90, pulse_width1: 1675,
     angle_min: -30,
-    angle_max:  90
+    angle_max: 135
   },
   //-------------------------------------
   {
@@ -160,7 +161,7 @@ const calibration_data = [
   //-------------------------------------
   {
     servo_number: 10, // D-2
-    angle0:  0, pulse_width0: 1000,
+    angle0:  0, pulse_width0: 1025,
     angle1: 45, pulse_width1: 1595,
     angle_min:  -9,
     angle_max:  90
@@ -171,7 +172,7 @@ const calibration_data = [
     angle0:  0, pulse_width0: 2300,
     angle1: 90, pulse_width1: 1200,
     angle_min: -30,
-    angle_max:  90
+    angle_max: 135
   },
   //-------------------------------------
 ];

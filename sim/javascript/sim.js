@@ -1,4 +1,5 @@
-const D2R = Math.PI / 180; // degree to radian
+import Const from "./const.js";
+const D2R = Const.D2R;
 
 const Sim = function () {
   let camera, scene, renderer;
@@ -6,7 +7,7 @@ const Sim = function () {
 
   const meshNormalMaterial = new THREE.MeshNormalMaterial();
   const redMaterial = new THREE.MeshLambertMaterial({ color: 0xFF0000, transparent: true, opacity: 0.8 });
-  const greenMaterial = new THREE.MeshLambertMaterial({ color: 0x00ff00, transparent: true, opacity: 0.5 });
+  const greenMaterial = new THREE.MeshLambertMaterial({ color: 0x00ff00, transparent: true, opacity: 1.0 });
   const blueMaterial = new THREE.MeshLambertMaterial({ color: 0x0044ff, transparent: true, opacity: 0.7 });
   const blue2Material = new THREE.MeshLambertMaterial({ color: 0x0055ff, transparent: true, opacity: 0.7 });
   const blue3Material = new THREE.MeshLambertMaterial({ color: 0x0066ff, transparent: true, opacity: 0.7 });
@@ -15,14 +16,16 @@ const Sim = function () {
   const grayMaterial = new THREE.MeshLambertMaterial({ color: 0x444444, transparent: true, opacity: 0.8 });
   const whiteMaterial = new THREE.MeshLambertMaterial({ color: 0xeeeeee, transparent: true, opacity: 0.5 });
   const blackMaterial = new THREE.MeshLambertMaterial({ color: 0x000000, transparent: true, opacity: 0.5 });
+  const wireframeMaterial = new THREE.MeshPhongMaterial({color: 0x00FFFF, wireframe: true});
 
   const SERVO_W = 27;
   const SERVO_H = 35;
   const SERVO_D = 16;
   const SERVO_AXIS_OFFSET = 7;
-  const SERVO2_OFFSET = 5;
-  const ARM2_H = 43;
-  const ARM3_H = 57;
+  const SERVO2_OFFSET_X   = 5;
+  const SERVO2_OFFSET_Y   = Const.L0;
+  const ARM2_H = Const.L1;
+  const ARM3_H = Const.L2;
   const BACKBONE_W = 157;
   const BACKBONE_H = 5;
   const BACKBONE_D = 27;
@@ -56,7 +59,7 @@ const Sim = function () {
       0.01,
       10000
     );
-    if (1) {
+    if (false) {
       camera.animate = function (t) {
         const u = Math.sin(0.02 * t * D2R) * 90 + 45;
         //camera.position.x = 250*Math.sin(u*D2R);
@@ -114,7 +117,8 @@ const Sim = function () {
   }
 
   function makeServo() {
-    const box = new THREE.Mesh(new THREE.BoxGeometry(SERVO_W, SERVO_H, SERVO_D), blueMaterial);
+    // blueMaterial
+    const box = new THREE.Mesh(new THREE.BoxGeometry(SERVO_W, SERVO_H, SERVO_D), wireframeMaterial);
     const axis = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), grayMaterial); // Group
 
     const bar = new THREE.Mesh(new THREE.CylinderGeometry(2.5, 2.5, SERVO_W), whiteMaterial);
@@ -132,15 +136,18 @@ const Sim = function () {
     const servo1 = makeServo();
     const servo2 = makeServo();
     servo2.rotation.x = 180 * D2R;
-    servo2.rotation.y = -90 * D2R;
-    if (!left) {
-      servo2.rotation.y += 180 * D2R;
+    if(left){
+      servo2.rotation.y = -90 * D2R;
+    }else{
+      servo2.rotation.y =  90 * D2R;
     }
-    servo2.position.x = -(servo1.geometry.parameters.width / 2 + servo2.geometry.parameters.depth / 2 + SERVO2_OFFSET);
-    servo2.position.y = servo2.axis.position.y;
+    servo2.rotation.z = 180 * D2R;
+
+    servo2.position.x = -(servo1.geometry.parameters.width / 2 + servo2.geometry.parameters.depth / 2 + SERVO2_OFFSET_X);
+    servo2.position.y = -SERVO_AXIS_OFFSET + SERVO2_OFFSET_Y;
     servo1.axis.add(servo2);
 
-    const ik_origin = new THREE.Mesh(new THREE.BoxGeometry(1, 20, 1), greenMaterial);
+    const ik_origin = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), greenMaterial);
     ik_origin.position.x = servo2.position.x;
     ik_origin.position.y = SERVO_AXIS_OFFSET;
     servo1.add(ik_origin);
@@ -150,12 +157,11 @@ const Sim = function () {
     servo2.axis.add(arm2);
 
     const servo3 = makeServo();
-    servo3.position.y = arm2.geometry.parameters.height / 2 - servo3.geometry.parameters.height / 2 + (servo3.geometry.parameters.height / 2 - servo3.axis.position.y);
+    servo3.position.y = arm2.geometry.parameters.height / 2 - servo3.geometry.parameters.height / 2 + (servo3.geometry.parameters.height / 2 - SERVO_AXIS_OFFSET);
     arm2.add(servo3);
 
     const arm3 = new THREE.Mesh(new THREE.BoxGeometry(4, ARM3_H, 4), blue2Material);
-    arm3.rotation.x = 90 * D2R;
-    arm3.position.z = arm3.geometry.parameters.height / 2;
+    arm3.position.y = arm3.geometry.parameters.height / 2;
     servo3.axis.add(arm3);
 
     if (1) {
@@ -178,6 +184,7 @@ const Sim = function () {
     leg.l2 = ARM3_H;
     leg.front = front;
     leg.left = left;
+    leg.l0 = Const.L0;
 
     return leg;
   }
@@ -187,19 +194,20 @@ const Sim = function () {
 
     if ("m5stickc") {
       const m5stickc = new THREE.Mesh(new THREE.BoxGeometry(48, 14, 24), orangeMaterial);
-      m5stickc.position.set(50, 8, 0);
       const lcd = new THREE.Mesh(new THREE.BoxGeometry(22, 1, 13), blackMaterial);
-      lcd.position.set(-7, 7, 0);
       m5stickc.add(lcd);
+      lcd.position.set(-7, 7, 0);
       backbone.add(m5stickc);
+      m5stickc.rotation.x = 180*D2R;
+      m5stickc.position.set(50, -8, 0);
     }
 
     const shoulder = new THREE.Mesh(new THREE.BoxGeometry(SHOULDER_W, SHOULDER_H, SHOULDER_D), blue2Material);
-    shoulder.position.set(((BACKBONE_W - SHOULDER_W) / 2)+SHOULDER_OFFSET, -(BACKBONE_H + SHOULDER_H) / 2, 0);
+    shoulder.position.set(((BACKBONE_W - SHOULDER_W) / 2)+SHOULDER_OFFSET, (BACKBONE_H + SHOULDER_H) / 2, 0);
     backbone.add(shoulder);
 
     const waist = new THREE.Mesh(new THREE.BoxGeometry(WAIST_W, WAIST_H, WAIST_D), blue3Material);
-    waist.position.set(-((BACKBONE_W - WAIST_W) / 2), -(BACKBONE_H + WAIST_H) / 2, 0);
+    waist.position.set(-((BACKBONE_W - WAIST_W) / 2), (BACKBONE_H + WAIST_H) / 2, 0);
     backbone.add(waist);
 
     const legs = [];
@@ -210,7 +218,8 @@ const Sim = function () {
         const sw = [shoulder, waist][fb];
         const h = fb == 0 ? SHOULDER_H : WAIST_H;
         const d = fb == 0 ? SHOULDER_D : WAIST_D;
-        leg.position.set(0, (SERVO_H / 2 + h / 2), (d / 2 - SERVO_D / 2) * (lr * 2 - 1));
+        leg.position.set(0, -(SERVO_H / 2 + h / 2), (d / 2 - SERVO_D / 2) * (lr * 2 - 1));
+        leg.rotation.x = 180 * D2R;
         sw.add(leg);
         legs.push(leg);
 
@@ -268,13 +277,13 @@ const Sim = function () {
   function set_servo_angles(leg_number, angle1, angle2, angle3) {
     const leg = dog.legs[leg_number];
     if(leg.left){
-      leg.servo1.axis.rotation.x = angle1;
-      leg.servo2.axis.rotation.x = angle2;
-      leg.servo3.axis.rotation.x = angle3-180*D2R;
+      leg.servo1.axis.rotation.x =  angle1;
+      leg.servo2.axis.rotation.x =  angle2;
+      leg.servo3.axis.rotation.x = -angle3;
     }else{
       leg.servo1.axis.rotation.x = -angle1;
       leg.servo2.axis.rotation.x = -angle2;
-      leg.servo3.axis.rotation.x = -angle3;
+      leg.servo3.axis.rotation.x =  angle3;
     }
   }
 

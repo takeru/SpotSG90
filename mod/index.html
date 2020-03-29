@@ -149,24 +149,44 @@
     $("#sleep").click(function(){
       cmd("dog.sleep");
     });
+
+    let current_motion = null;
+    const make_motion_request = function(name, args){
+      if(!name){
+        name = current_motion["name"];
+      }
+      if(!args && name=="step"){
+        args = {
+          "LA": parseFloat($(".step-args input[name=LA]").val()),
+          "LB": parseFloat($(".step-args input[name=LB]").val()),
+          "RA": parseFloat($(".step-args input[name=RA]").val()),
+          "RB": parseFloat($(".step-args input[name=RB]").val())
+        }
+      }
+      return { "name": name, "speed": parseFloat($("#motion_speed").val()), "args": args };
+    }
+
     $(".motion").click(function(){
-      const name  = $(this).attr("name");
-      const speed = $("#motion_speed").val();
-      const args  = $(this).attr("args");
-      cmd("dog.motion", { "name": name, "speed": speed, "args": JSON.parse(args) });
+      const name = $(this).attr("name");
+      let args = $(this).attr("args");
+      if(args){ args = JSON.parse(args); }
+      current_motion = make_motion_request(name, args);
+      cmd("dog.motion", current_motion);
     });
-    $("#motion_speed").on("input", function(){
-      const speed  = $(this).val();
-      queued_cmd.speed = speed;
-    });
-    let queued_cmd = {speed: null, busy: false};
+
+    const f = function(){
+      queued_cmd.request = make_motion_request();
+    };
+    $("#motion_speed").on("input", f);
+    $(".step-args input").on("input", f);
+    let queued_cmd = {request: null, busy: false};
     setInterval(function(){
-      if(!queued_cmd.busy && queued_cmd.speed){
-        cmd("dog.set_motion_speed", {speed: queued_cmd.speed}).then((response) => {
+      if(!queued_cmd.busy && queued_cmd.request){
+        cmd("dog.update_motion", queued_cmd.request).then((response) => {
           queued_cmd.busy = false;
         });
         queued_cmd.busy = true;
-        queued_cmd.speed = null;
+        queued_cmd.request = null;
       }
     }, 50);
   };
@@ -174,8 +194,8 @@
   const initParamsUI = function () {
     const slidersUI = initSlidersUI("params");
     const params = {
-        "position": {x: 0,y: 65,z: 0},
-        "rotation": {x: 0,y:  0,z: 0},
+        "position": {x: 0,y: 120,z: 0},
+        "rotation": {x: 0,y:   0,z: 0},
         "legs":[
           {"target":{"position":{x:  15, y: 0, z: -30}}},
           {"target":{"position":{x:  15, y: 0, z:  30}}},
@@ -518,12 +538,25 @@
   <button class="motion" name="default" args='{}'>default</button>
   <button class="motion" name="dance"   args='{}'>dance</button>
   <button class="motion" name="walk"    args='{}'>walk</button>
-  <button class="motion" name="step"    args='{}'>step</button>
   <button class="motion" name="STOP"    args='{}'>STOP</button>
-
   <input id="motion_speed" type="range" min="0.01", value="1.0" max="3.0" step="0.01">
 </div>
 
+
+<div>
+  <button class="motion" name="step">step</button>
+  <button class="motion" name="STOP"    args='{}'>STOP</button>
+  <table class="step-args">
+    <tr>
+      <td><input name="LA" type="range" step="0.1" value="10" min="0" max="40"></td>
+      <td><input name="LB" type="range" step="0.1" value="0" min="-40" max="40"></td>
+    </tr>
+    <tr>
+      <td><input name="RA" type="range" step="0.1" value="10" min="0" max="40"></td>
+      <td><input name="RB" type="range" step="0.1" value="0" min="-40" max="40"></td>
+    </tr>
+  </table>
+</div>
 
 
 <div id="tunes" class="sliders">
@@ -533,9 +566,9 @@
   </div>
   <div>
     <h4>position:</h4>
-    <label>X:<span></span><input id="position_x" class="slider" type="range" step="0.1" value="0" min="-20" max="20"></label>
-    <label>Y:<span></span><input id="position_y" class="slider" type="range" step="0.1" value="0" min="-20" max="20"></label>
-    <label>Z:<span></span><input id="position_z" class="slider" type="range" step="0.1" value="0" min="-20" max="20"></label>
+    <label>X:<span></span><input id="position_x" class="slider" type="range" step="0.1" value="0" min="-40" max="40"></label>
+    <label>Y:<span></span><input id="position_y" class="slider" type="range" step="0.1" value="0" min="-40" max="40"></label>
+    <label>Z:<span></span><input id="position_z" class="slider" type="range" step="0.1" value="0" min="-40" max="40"></label>
   </div>
   <div>
     <h4>rotation:</h4>
@@ -606,7 +639,7 @@
   <div>
     <h4>position:</h4>
     <label>X:<span></span><input id="position_x" class="slider" type="range" step="0.1" value="" min="-30" max="30"></label>
-    <label>Y:<span></span><input id="position_y" class="slider" type="range" step="0.1" value="" min="10"  max="75"></label>
+    <label>Y:<span></span><input id="position_y" class="slider" type="range" step="0.1" value="" min="80"  max="140"></label>
     <label>Z:<span></span><input id="position_z" class="slider" type="range" step="0.1" value="" min="-30" max="30"></label>
   </div>
   <div>

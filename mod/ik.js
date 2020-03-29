@@ -16,6 +16,7 @@ const IK = function (THREE) {
     if (Math.PI <= t) { t -= Math.PI * 2; }
     return t;
   }
+  this.normalize_radian = normalize_radian;
 
   this.calc_leg_angles = function (dog, leg, debug) {
     const dog_position = new THREE.Vector3();
@@ -68,17 +69,19 @@ const IK = function (THREE) {
     const y = r2.y;
     const z = r2.z;
     let angle1 = Math.atan2(-z, -y);
-    const y2 = -Math.sqrt(y * y + z * z);
+    const y2 = -(Math.sqrt(y * y + z * z) - leg.l0);
     const theta = calcIK((leg.left ? -1 : 1), x, y2, leg.l1, leg.l2);
     if (theta) {
-      let angle2 = normalize_radian(-theta.theta1 - 90 * D2R);
-      let angle3 = normalize_radian(-theta.theta2 - 90 * D2R);
-      if(leg.left){
-        angle3 = normalize_radian(angle3 + 180 * D2R);
+      let angle2 = null;
+      let angle3 = null;
+    if(leg.left){
+        angle1 = normalize_radian       (angle1 + 180 * D2R);
+        angle2 = normalize_radian(-theta.theta1 -  90 * D2R);
+        angle3 = normalize_radian( theta.theta2 +   0 * D2R);
       }else{
-        angle1 = normalize_radian(-angle1);
-        angle2 = normalize_radian(-angle2);
-        angle3 = normalize_radian(-angle3);
+        angle1 = normalize_radian(      -angle1 + 180 * D2R);
+        angle2 = normalize_radian( theta.theta1 +  90 * D2R);
+        angle3 = normalize_radian(-theta.theta2 +   0 * D2R);
       }
       return {angle1: angle1, angle2: angle2, angle3: angle3};
     }
