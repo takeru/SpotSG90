@@ -60,8 +60,8 @@ const Dog = function () {
       Digital.write(10, (count / 100) & 1);
 
       const ticks = Time.ticks;
-      motion_params.t += (ticks-motion_params.prev_ticks)*motion_params.speed;
       motion[motion_params.name](motion_params.t, dog, motion_params.args);
+      motion_params.t += (ticks-motion_params.prev_ticks)*motion_params.speed;
       set_all_legs_angles();
       motion_params.prev_ticks = ticks;
 

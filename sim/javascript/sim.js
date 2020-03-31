@@ -17,6 +17,8 @@ const Sim = function () {
   const whiteMaterial = new THREE.MeshLambertMaterial({ color: 0xeeeeee, transparent: true, opacity: 0.5 });
   const blackMaterial = new THREE.MeshLambertMaterial({ color: 0x000000, transparent: true, opacity: 0.5 });
   const wireframeMaterial = new THREE.MeshPhongMaterial({color: 0x00FFFF, wireframe: true});
+  const redWireframeMaterial = new THREE.MeshPhongMaterial({color: 0xFF0000, wireframe: true});
+  const yellowWireframeMaterial = new THREE.MeshPhongMaterial({color: 0xFFFF00, wireframe: true});
 
   const SERVO_W = 27;
   const SERVO_H = 35;
@@ -253,6 +255,13 @@ const Sim = function () {
     const dog = backbone;
     dog.legs = legs;
     scene.add(dog);
+
+    if(1){
+      const target = new THREE.Mesh(new THREE.BoxGeometry(BACKBONE_W, BACKBONE_H, BACKBONE_D), yellowWireframeMaterial);
+      scene.add(target);
+      dog.target = target;
+    }
+
     return dog;
   }
 

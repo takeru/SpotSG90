@@ -3,7 +3,7 @@ const Motion = function () {
   const BODY_Y = 110;
   const BODY_Z =   0;
 
-  this.walk = function (t, dog) {
+  this.walk1 = function (t, dog) {
     // 3333
     //     1111
     //        2222
@@ -128,10 +128,99 @@ const Motion = function () {
     }
   }
 
+  this.prev_t = null;
+  this.walk = function (t, dog, args) {
+    if(t==0){
+      this.prev_t = null;
+    }
+    const leg_position = function(dog, leg){
+      const l = (leg.front ?   5 : -95);
+      const w = (leg.left  ? -30 :  30);
+      return {
+        x: dog.position.x +  Math.cos(dog.rotation.y) * l + Math.sin(dog.rotation.y) * w,
+        z: dog.position.z + -Math.sin(dog.rotation.y) * l + Math.cos(dog.rotation.y) * w
+      }
+    }
+
+    const dt = t - this.prev_t;
+    if(this.prev_t){
+      const cycle_ms = 2000; // left=1000 + right=1000
+      const t0 = Math.floor(t) % cycle_ms; // 0-1999
+      const lr = t0 < (cycle_ms/2) ? 0 : 1; // left=0,right=1
+      const t1 = t0 % (cycle_ms/2); // 0-999
+      const t2 = (cycle_ms/2) - t1; // 1000-1
+      const progress = t1 / (cycle_ms/2);
+
+      const move = function(dog, speed, dt){
+        dog.position.x +=  Math.cos(dog.rotation.y) * speed.px / 1000.0 * dt;
+        dog.position.x +=  Math.sin(dog.rotation.y) * speed.pz / 1000.0 * dt;
+        dog.position.y =   BODY_Y;
+        dog.position.z += -Math.sin(dog.rotation.y) * speed.px / 1000.0 * dt;
+        dog.position.z +=  Math.cos(dog.rotation.y) * speed.pz / 1000.0 * dt;
+
+        dog.rotation.x =  0;
+        dog.rotation.y += speed.ry / 1000.0 * dt;
+        dog.rotation.z =  0;
+      }
+
+      // move body
+      move(dog, args.speed, dt);
+
+      // estimated body position & rotation at next landing point
+      const dog2 = {
+        position: dog.position.clone(),
+        rotation: dog.rotation.clone()
+      }
+      const repeat = 3;
+      for(let i=0; i<repeat; i++){
+        move(dog2, args.speed, t2/repeat);
+      }
+      if(dog.target){ // for sim
+        dog.target.position.copy(dog2.position);
+        dog.target.rotation.copy(dog2.rotation);
+      }
+
+      for(let leg_number=0; leg_number<4; leg_number++){
+        const leg = dog.legs[leg_number];
+        if(lr==0 && (leg_number==1 || leg_number==2)){ continue; }
+        if(lr==1 && (leg_number==0 || leg_number==3)){ continue; }
+
+        const p = leg_position(dog2, leg);
+        leg.target.position.y = args.h * (1-2*Math.abs(progress-0.5));
+
+        const progress2 = Math.min(1.0, dt / t2);
+        leg.target.position.x = leg.target.position.x * (1.0-progress2) + p.x * progress2;
+        leg.target.position.z = leg.target.position.z * (1.0-progress2) + p.z * progress2;
+      }
+    }else{
+      dog.position.x =  0;
+      dog.position.y =  BODY_Y;
+      dog.position.z =  0;
+      dog.rotation.x =  0;
+      dog.rotation.y =  0;
+      dog.rotation.z =  0;
+      dog.legs.forEach((leg, leg_number)=>{
+        const p = leg_position(dog, leg);
+        leg.target.position.x = p.x; dog.position.x;
+        leg.target.position.z = p.z; dog.position.z;
+      });
+    }
+    this.prev_t = t;
+  }
+
   this.default = function(t, dog){
-    //this.walk(t, dog);
-    this.step(t, dog, {LA: 15, LB: 0, RA: 15, RB: 20});
+    //this.walk1(t, dog);
+    //this.step(t, dog, {LA: 15, LB: 0, RA: 15, RB: 20});
     //this.dance(t, dog);
+    this.walk(t, dog, {
+      speed:{
+        px: 10,
+        pz: 10,
+        ry: -10 * D2R
+      },
+      h: 10
+    });
+
   }
 };
 

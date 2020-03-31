@@ -16,6 +16,7 @@ onload = function () {
 const ik = new IK(THREE);
 const motion = new Motion();
 
+let flag = false;
 const animate_callback = function (t, dog) {
   /*
   dog.position.y = 150;
@@ -28,12 +29,21 @@ const animate_callback = function (t, dog) {
   return;
   */
 
-  motion.default(t, dog);
-  dog.legs.forEach(function (leg) {
-    const angles = ik.calc_leg_angles(dog, leg, true);
-    if(angles){
-      const leg_number = (leg.left ? 0 : 1) + (leg.front ? 0 : 2);
-      sim.set_servo_angles(leg_number, angles.angle1, angles.angle2, angles.angle3);
-    }
-  })
+  if(flag){
+    motion.default(t, dog);
+    dog.legs.forEach(function (leg) {
+      const angles = ik.calc_leg_angles(dog, leg, true);
+      if(angles){
+        const leg_number = (leg.left ? 0 : 1) + (leg.front ? 0 : 2);
+        sim.set_servo_angles(leg_number, angles.angle1, angles.angle2, angles.angle3);
+      }
+    });
+    flag = false;
+  }
 }
+
+setInterval(()=>{
+  if(Math.random() < 0.3){
+    flag = true;
+  }
+}, 20);
