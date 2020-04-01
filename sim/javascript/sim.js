@@ -192,7 +192,9 @@ const Sim = function () {
   }
 
   function makeDog() {
+    const dog = new THREE.Mesh(new THREE.BoxGeometry(40, 10, 20), yellowMaterial);
     const backbone = new THREE.Mesh(new THREE.BoxGeometry(BACKBONE_W, BACKBONE_H, BACKBONE_D), blueMaterial);
+    dog.add(backbone);
 
     if ("m5stickc") {
       const m5stickc = new THREE.Mesh(new THREE.BoxGeometry(48, 14, 24), orangeMaterial);
@@ -252,7 +254,7 @@ const Sim = function () {
       }
     }
 
-    const dog = backbone;
+    dog.backbone = backbone;
     dog.legs = legs;
     scene.add(dog);
 

@@ -19,33 +19,11 @@ const IK = function (THREE) {
   this.normalize_radian = normalize_radian;
 
   this.calc_leg_angles = function (dog, leg, debug) {
-    const dog_position = new THREE.Vector3();
-    dog_position.copy(dog.position);
-    if(dog.position.tune){
-      dog_position.x += dog.position.tune.x;
-      dog_position.y += dog.position.tune.y;
-      dog_position.z += dog.position.tune.z;
-    }
-
-    const dog_rotation = new THREE.Euler();
-    dog_rotation.copy(dog.rotation);
-    if(dog.position.tune){
-      dog_rotation.x += dog.rotation.tune.x;
-      dog_rotation.y += dog.rotation.tune.y;
-      dog_rotation.z += dog.rotation.tune.z;
-    }
-
-    const leg_target   = new THREE.Vector3();
-    leg_target.copy(leg.target.position);
-    if(leg.target.position.tune){
-      leg_target.x += leg.target.position.tune.x;
-      leg_target.y += leg.target.position.tune.y;
-      leg_target.z += leg.target.position.tune.z;
-    }
-
     const m = new THREE.Matrix4();
-    m.multiply((new THREE.Matrix4()).setPosition(dog_position));
-    m.multiply((new THREE.Matrix4()).makeRotationFromEuler(dog_rotation));
+    m.multiply((new THREE.Matrix4()).setPosition(dog.position));
+    m.multiply((new THREE.Matrix4()).makeRotationFromEuler(dog.rotation));
+    m.multiply((new THREE.Matrix4()).setPosition(dog.backbone.position));
+    m.multiply((new THREE.Matrix4()).makeRotationFromEuler(dog.backbone.rotation));
     m.multiply(leg.ik_matrix4);
 
     if(debug){
@@ -57,12 +35,17 @@ const IK = function (THREE) {
 
     // global to local
     const r2 = new THREE.Vector3();
-    r2.copy(leg_target);
+    r2.copy(leg.target.position);
     const inv = new THREE.Matrix4();
     inv.getInverse(m);
     r2.applyMatrix4(inv);
     if(debug){
       leg.result_local.position.copy(r2);
+    }
+    if(leg.target.position.tune){
+      r2.x += leg.target.position.tune.x;
+      r2.y += leg.target.position.tune.y;
+      r2.z += leg.target.position.tune.z;
     }
 
     const x = r2.x * (leg.left ? 1 : -1);

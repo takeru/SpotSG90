@@ -31,6 +31,10 @@ const Dog = function () {
   const dog = {
     position: new THREE.Vector3(),
     rotation: new THREE.Euler(),
+    backbone:{
+      position: new THREE.Vector3(),
+      rotation: new THREE.Euler(),
+    },
     legs: [
       // makeLeg(true, true, [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 8.5, 22, -40, 1]),
       // makeLeg(true, false, [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 8.5, 22, 40, 1]),
@@ -124,8 +128,12 @@ const Dog = function () {
   }
 
   this.set_tunes = function(tunes){
-    dog.position.tune = tunes.position;
-    dog.rotation.tune = tunes.rotation;
+    dog.backbone.position.x = tunes.position.x;
+    dog.backbone.position.y = tunes.position.y;
+    dog.backbone.position.z = tunes.position.z;
+    dog.backbone.rotation.x = tunes.rotation.x;
+    dog.backbone.rotation.y = tunes.rotation.y;
+    dog.backbone.rotation.z = tunes.rotation.z;
     for(let i=0; i<4; i++){
       dog.legs[i].target.position.tune = tunes.legs[i].target.position;
     }
