@@ -1,3 +1,4 @@
+<head>
 <script src="https://code.jquery.com/jquery-3.4.1.min.js"
   integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous">
   </script>
@@ -6,6 +7,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.15.0/d3.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.15/c3.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sprintf/1.1.2/sprintf.js"></script>
+<script src="https://bobboteck.github.io/joy/joy.js"></script>
 
 <script>
   const D2R = Math.PI / 180; // degree to radian
@@ -62,11 +64,11 @@
 
   const connect = function () {
     var ws_url = "";
-    if (window.location.protocol == "file:") {
+    //if (window.location.protocol == "file:") {
       ws_url = 'ws://spotsg90.local/ws';
-    } else {
-      ws_url = 'ws://' + window.location.host + ':' + window.location.port + '/ws';
-    }
+    // } else {
+    //   ws_url = 'ws://' + window.location.host + ':' + window.location.port + '/ws';
+    // }
 
     const socket = new WebSocket(ws_url);
 
@@ -153,6 +155,7 @@
     let current_motion = null;
     const make_motion_request = function(name, args){
       if(!name){
+        if(!current_motion){ return null; }
         name = current_motion["name"];
       }
       if(!args && name=="step"){
@@ -209,6 +212,7 @@
     $("#motion_speed").on("input", f);
     $(".motion-args input[type=range]").on("input", f);
     $(".motion-args input[type=number]").on("change", f);
+    $(window).on("joystickchange", f);
     let queued_cmd = {request: null, busy: false};
     setInterval(function(){
       if(!queued_cmd.busy && queued_cmd.request){
@@ -557,11 +561,81 @@
   };
 </script>
 
+<script type="text/javascript">
+  $(()=>{
+    var joy1 = new JoyStick('joystick1');
+    var joy2 = new JoyStick('joystick2');
+    setInterval(()=>{
+      let px = 40 * joy1.GetY() / 100;
+      if(px==0){ px = 40 * joy2.GetY() / 100; }
+      const pz = -40 * joy1.GetX() / 100;
+      const ry =  20 * joy2.GetX() / 100;
+      if(
+        $(".walk-args input[name=px]").val() != px ||
+        $(".walk-args input[name=pz]").val() != pz ||
+        $(".walk-args input[name=ry]").val() != ry
+      ){
+        $(".walk-args input[name=px]").val(px);
+        $(".walk-args input[name=pz]").val(pz);
+        $(".walk-args input[name=ry]").val(ry);
+        $(window).trigger('joystickchange');
+      }
+    }, 100);
+  });
+</script>
+
+<meta name="viewport" content="width=360,initial-scale=1">
+
+<style>
+@media screen and (max-width: 480px) {
+  .large-display {
+    display: none;
+  }
+  button {
+    font-size: 120%;
+  }
+}
+@media screen and (min-width: 481px) {
+  .small-display {
+    display: none;
+  }
+}
+.joystick{
+  width:200px;
+  height:200px;
+}
+</style>
+
+</head>
+
 <body>
 
 <div>
   <button v="wakeup">Wakeup</button>
   <button v="sleep">Sleep</button>
+  Speed: <input id="motion_speed" type="range" min="0.01", value="1.0" max="3.0" step="0.01">
+</div>
+
+<div class="controller">
+  <button class="motion" name="walk">walk</button>
+  <button class="motion" name="STOP"'>STOP</button>
+  <div id="joystick1" class="joystick" style="margin:0px;"></div>
+  <div id="joystick2" class="joystick" style="margin:0px;"></div>
+  <div style="width:200px;height:200px;"></div>
+</div>
+
+<div>
+  <h3>motion:walk</h3>
+  <button class="motion" name="walk">walk</button>
+  <button class="motion" name="STOP"'>STOP</button>
+  <table class="motion-args walk-args">
+    <tr>
+      <td>px:<input name="px" type="range" step="1"  value="0"  min="-40" max="40"></td>
+      <td>pz:<input name="pz" type="range" step="1"  value="0"  min="-40" max="40"></td>
+      <td>ry:<input name="ry" type="range" step="1" value="0"  min="-45" max="45"></td>
+      <td>h: <input name="h"  type="range" step="1"  value="5" min="0" max="40"></td>
+    </tr>
+  </table>
 </div>
 
 <div>
@@ -570,9 +644,7 @@
   <button class="motion" name="dance"   args='{}'>dance</button>
   <button class="motion" name="walk1"   args='{}'>walk1</button>
   <button class="motion" name="STOP"    args='{}'>STOP</button>
-  <input id="motion_speed" type="range" min="0.01", value="1.0" max="3.0" step="0.01">
 </div>
-
 
 <div>
   <h3>motion:step</h3>
@@ -585,22 +657,6 @@
       <td>H:<input name="H"  type="range" step="0.1"  value="10" min="0" max="40"></td>
       <td>W:<input name="W"  type="range" step="0.1"  value="0" min="-40" max="40"></td>
       <td>LR:<input name="LR" type="range" step="0.01" value="0" min="-1" max="1"></td>
-    </tr>
-  </table>
-</div>
-
-<div>
-  <h3>motion:walk</h3>
-  <button v="wakeup">Wakeup</button>
-  <button v="sleep">Sleep</button>
-  <button class="motion" name="walk">walk</button>
-  <button class="motion" name="STOP"'>STOP</button>
-  <table class="motion-args walk-args">
-    <tr>
-      <td>px:<input name="px" type="range" step="1"  value="0"  min="-40" max="40"></td>
-      <td>pz:<input name="pz" type="range" step="1"  value="0"  min="-40" max="40"></td>
-      <td>ry:<input name="ry" type="range" step="1" value="0"  min="-45" max="45"></td>
-      <td>h: <input name="h"  type="range" step="1"  value="5" min="0" max="40"></td>
     </tr>
   </table>
 </div>
@@ -675,7 +731,7 @@
   }
 </style>
 
-<div id="params" class="sliders">
+<div id="params" class="sliders large-display">
   <h3>params</h3>
   <div class="preset">
     <button v="a">a</button>
@@ -739,7 +795,7 @@
     background-color: lightpink;
   }
 </style>
-<div id="calibration">
+<div id="calibration" class="large-display">
   <h3>calibration</h3>
   <div class="preset">
     <button v="test0">test0</button>
