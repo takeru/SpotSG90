@@ -134,7 +134,7 @@ const Motion = function () {
       this.prev_t = null;
     }
     const leg_position = function(dog, leg){
-      const l = (leg.front ?   5 : -95);
+      const l = (leg.front ?  15 : -85);
       const w = (leg.left  ? -30 :  30);
       return {
         x: dog.position.x +  Math.cos(dog.rotation.y) * l + Math.sin(dog.rotation.y) * w,

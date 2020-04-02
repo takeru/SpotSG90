@@ -39,6 +39,7 @@
     if (socket && socket.readyState == WebSocket.OPEN) {
       const ms = Date.now();
       if (socket.sent_ms == null || 1000 < ms - socket.sent_ms) {
+        cmd("dog.ping");
         cmd("ping", { "seq": socket.seq, "ms": ms }).then((response) => {
           const ms = Date.now();
           const delay = ms - response.ms;
@@ -127,7 +128,7 @@
   setInterval(() => {
     for (let [id, value] of waiting_list) {
       const [timestamp, resolve, reject] = value;
-      if (10 * 1000 < Date.now() - timestamp) {
+      if (3 * 1000 < Date.now() - timestamp) {
         waiting_list.delete(id);
         if (reject) {
           reject("timeout");
@@ -222,7 +223,7 @@
         queued_cmd.busy = true;
         queued_cmd.request = null;
       }
-    }, 50);
+    },100);
   };
 
   const initParamsUI = function () {
@@ -356,7 +357,7 @@
         queued_cmd.busy = true;
         queued_cmd.params = null;
       }
-    }, 1);
+    }, 100);
 
     return {
       set_params: set_params
@@ -621,7 +622,7 @@
   <button class="motion" name="STOP"'>STOP</button>
   <div id="joystick1" class="joystick" style="margin:0px;"></div>
   <div id="joystick2" class="joystick" style="margin:0px;"></div>
-  <div style="width:200px;height:200px;"></div>
+  <div style="width:200px;height:50px;"></div>
 </div>
 
 <div>

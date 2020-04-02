@@ -153,6 +153,7 @@ const Dog = function () {
   this.sleep = ()=>{ servo.sleep(); };
   this.wakeup = ()=>{ servo.wakeup(); };
 
+  let last_ping_t = null;
   this.cmd = function(cmd, request){
     if(cmd=="dog.sleep"){
       this.sleep();
@@ -176,11 +177,24 @@ const Dog = function () {
     if(cmd=="dog.set_tunes"){
       return this.set_tunes(request.tunes);
     }
+    if(cmd=="dog.ping"){
+      last_ping_t = Time.ticks;
+      return {"result": "OK"};
+    }
     if (cmd.startsWith("dog.servo.")) {
       return servo.cmd(cmd, request);
     }
     return {"ERROR": `unknown command [${cmd}]`};
   }
+
+  Timer.repeat(() => {
+    if(last_ping_t){
+      if(2000 < (Time.ticks - last_ping_t)){
+        this.sleep();
+        last_ping_t = null;
+      }
+    }
+  }, 1000);
 }
 
 export default Dog;
