@@ -29,7 +29,7 @@ const animate_callback = function (t, dog) {
   return;
   */
 
-  if(flag){
+  if(true || flag){
     motion.default(t, dog);
     dog.legs.forEach(function (leg) {
       const angles = ik.calc_leg_angles(dog, leg, true);
