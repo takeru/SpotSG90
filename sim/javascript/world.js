@@ -8,6 +8,12 @@ const World = function () {
   let renderer;
 
   this.setup = function (cb) {
+    //OIMO.Setting.defaultContactPositionCorrectionAlgorithm = OIMO.PositionCorrectionAlgorithm.NGS;
+    //OIMO.Setting.alternativeContactPositionCorrectionAlgorithm = OIMO.PositionCorrectionAlgorithm.NGS;
+    //OIMO.Setting.defaultJointPositionCorrectionAlgorithm = OIMO.PositionCorrectionAlgorithm.NGS;
+    //OIMO.Setting.defaultRestitution = 0.0
+    //OIMO.Setting.disableSleeping = true;
+
     scene = new THREE.Scene();
     oimo_world = new OIMO.World();
     //oimo_world.setGravity(new OIMO.Vec3(0, -9.80665, 0));

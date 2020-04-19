@@ -1,7 +1,7 @@
 const OIMO_THREE = {};
 const fixCenterOfGravity = true;
 
-const SCALE = 1000.0;
+const SCALE = 200.0;
 OIMO_THREE.SCALE = SCALE;
 OIMO_THREE.buildRigidBody = function (root) {
   const root_position = root.position.clone();
@@ -14,8 +14,11 @@ OIMO_THREE.buildRigidBody = function (root) {
   rbcnf.type = OIMO.RigidBodyType.DYNAMIC;
   if (root.oimo_rigid_body_config) {
     const c = root.oimo_rigid_body_config;
-    if (c.type) {
+    if (c.type !== undefined) {
       rbcnf.type = c.type;
+    }
+    if(c.autoSleep !== undefined){
+      rbcnf.autoSleep = c.autoSleep;
     }
   }
   rbcnf.position = new OIMO.Vec3(root_position.x / SCALE, root_position.y / SCALE, root_position.z / SCALE);
@@ -46,13 +49,13 @@ OIMO_THREE.buildRigidBody = function (root) {
     shcnf.rotation = quaternionToMat3(new OIMO.Quat(quaternion.x, quaternion.y, quaternion.z, quaternion.w));
     if (obj.oimo_shape_config) {
       const c = obj.oimo_shape_config;
-      if (c.density) {
+      if (c.density !== undefined) {
         shcnf.density = c.density;
       }
-      if (c.friction) {
+      if (c.friction !== undefined) {
         shcnf.friction = c.friction;
       }
-      if (c.restitution) {
+      if (c.restitution !== undefined) {
         shcnf.restitution = c.restitution;
       }
     }
