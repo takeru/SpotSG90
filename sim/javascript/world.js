@@ -103,6 +103,7 @@ const World = function () {
     const meshNormalMaterial = new THREE.MeshNormalMaterial();
     const grayMaterial = new THREE.MeshLambertMaterial({ color: 0x444444, transparent: true, opacity: 0.8 });
     const blackMaterial = new THREE.MeshLambertMaterial({ color: 0x000000, transparent: true, opacity: 0.5 });
+    const whiteMaterial = new THREE.MeshLambertMaterial({ color: 0x999999, transparent: true, opacity: 0.8 });
   
     if ("ground") {
       const w = 2000;
@@ -115,10 +116,14 @@ const World = function () {
       }
 
       const box1 = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), grayMaterial);
+      box1.oimo_shape_config = {
+        friction: 0.9,
+        restitution: 0.1
+      }
       box1.position.set(0, -h / 2, 0);
       group.add(box1);
 
-      const box2 = new THREE.Mesh(new THREE.BoxGeometry(200, 10, 100), grayMaterial);
+      const box2 = new THREE.Mesh(new THREE.BoxGeometry(200, 10, 100), whiteMaterial);
       box2.position.set(400, 10, 0);
       group.add(box2);
 

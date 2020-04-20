@@ -238,7 +238,7 @@ const SandBox = function () {
 
   const makeWeightScale = function () {
     const x = -300;
-    const y = 30;
+    const y = 100;
     const z = 0;
 
     const box1 = new THREE.Mesh(new THREE.BoxGeometry(100, 5, 100), whiteMaterial);
@@ -246,12 +246,12 @@ const SandBox = function () {
       //density: 1/1000/1000/1000, // Kg/m^3
       //restitution: 1,
     }
-    box1.position.set(x, y + 20, z);
+    box1.position.set(x, y+10, z);
     OIMO_THREE.buildRigidBody(box1);
     scene.add(box1);
     oimo_world.addRigidBody(box1.oimo_rigid_body);
 
-    const box2 = new THREE.Mesh(new THREE.BoxGeometry(100, 10, 100), grayMaterial);
+    const box2 = new THREE.Mesh(new THREE.BoxGeometry(100, 5, 100), grayMaterial);
     box2.oimo_rigid_body_config = {
       //type: OIMO.RigidBodyType.STATIC
     }
@@ -297,8 +297,8 @@ const SandBox = function () {
 
   const makeSlope = function () {
     const x = -200;
-    const y = 30;
-    const z = 200;
+    const y =    0;
+    const z =  200;
 
     const box1 = new THREE.Mesh(new THREE.BoxGeometry(200, 5, 100), whiteMaterial);
     box1.oimo_rigid_body_config = {
@@ -329,11 +329,11 @@ const SandBox = function () {
   }
 
   const make4Legs = function () {
-    const x = 0;
-    const y = 130;
+    const x = 300;
+    const y = 230;
     const z = 0;
 
-    const body = new THREE.Mesh(new THREE.BoxGeometry(200, 10, 100), blueMaterial);
+    const body = new THREE.Mesh(new THREE.BoxGeometry(200, 20, 100), blueMaterial);
     body.oimo_shape_config = {
       restitution: 0.0001,
       friction: 1.0
@@ -348,26 +348,13 @@ const SandBox = function () {
     console.log("body.geometry.parameters=", body.geometry.parameters)
     console.log("body.oimo_rigid_body...getHalfExtents=", body.oimo_rigid_body.getShapeList().getGeometry().getHalfExtents())
 
-    const fixedJoint = function (a, b) {
-      const worldAnchor = new OIMO.Vec3(a.position.x / OIMO_THREE.SCALE, a.position.y / OIMO_THREE.SCALE, a.position.z / OIMO_THREE.SCALE);
-      const worldAxis = new OIMO.Vec3(0, -1, 0);
-      const c = new OIMO.PrismaticJointConfig()
-      c.init(a.oimo_rigid_body, b.oimo_rigid_body, worldAnchor, worldAxis);
-      const frequency = 15;
-      const dampingRatio = 0.5;
-      c.springDamper.setSpring(frequency, dampingRatio);
-      c.limitMotor.setLimits(0, 0);
-      const j = new OIMO.PrismaticJoint(c);
-      oimo_world.addJoint(j);
-    }
-
     const makeLeg = function (body, x, z, front, left) {
-      const l1 = 50;
+      const l1 = 60;
       const l2 = 40;
       const space1 = 0;
       const space2 = 0;
       const space3 = 0;
-      const r = 5;
+      const r = 10;
       const a = 10;
 
       const box1 = new THREE.Mesh(new THREE.BoxGeometry(a, l1, a), greenMaterial);
@@ -390,8 +377,8 @@ const SandBox = function () {
       scene.add(box2);
       oimo_world.addRigidBody(box2.oimo_rigid_body);
 
-      //const foot = new THREE.Mesh(new THREE.SphereGeometry(r, 10, 10), blueMaterial);
-      const foot = new THREE.Mesh(new THREE.BoxGeometry(r * 2, r * 2, r * 2), blueMaterial);
+      const foot = new THREE.Mesh(new THREE.SphereGeometry(r, 10, 10), blueMaterial);
+      //const foot = new THREE.Mesh(new THREE.BoxGeometry(r * 2, r * 2, r * 2), blueMaterial);
       foot.position.set(x, box2.position.y - l2 / 2 - r - space3, z);
       foot.oimo_rigid_body_config = {
         //autoSleep: false
@@ -416,17 +403,21 @@ const SandBox = function () {
         new OIMO.Vec3(0, 0, 1)
       );
       c1.limitMotor.setLimits(-60 * D2R, 0 * D2R)
-      c1.springDamper.setSpring(0, 0);
+      //c1.springDamper.setSpring(0, 0);
+      const frequency = 50;
+      const dampingRatio = 0.1;
+      c1.springDamper.setSpring(frequency, dampingRatio);
       const j1 = new OIMO.RevoluteJoint(c1);
       oimo_world.addJoint(j1);
+      const cycle = 300;
+      const torque = 1.5;
+      const rate = 0.15;
       box1.animate = function (t, o) {
-        const cycle = 600;
         if (front == left) { t += (cycle / 2); }
         const a = Math.max(0, Math.sin(2 * Math.PI * (t % cycle) / cycle));
         const target = -20 + a * -40;
-        const rate = 0.15;
         const speed = (1 / rate) * (target * D2R - j1.getAngle())
-        j1.getLimitMotor().setMotor(speed, 1.0);
+        j1.getLimitMotor().setMotor(speed, torque);
       };
 
       const c2 = new OIMO.RevoluteJointConfig();
@@ -441,40 +432,58 @@ const SandBox = function () {
         new OIMO.Vec3(0, 0, 1)
       );
       c2.limitMotor.setLimits(0 * D2R, 120 * D2R)
-      //c2.limitMotor.setMotor(1 * D2R, 1.0);
-      c2.springDamper.setSpring(0, 0);
+      //c2.springDamper.setSpring(0, 0);
+      c2.springDamper.setSpring(frequency, dampingRatio);
       const j2 = new OIMO.RevoluteJoint(c2);
       oimo_world.addJoint(j2);
       box2.animate = function (t, o) {
-        const cycle = 600;
         if (front == left) { t += cycle / 2; }
         const a = Math.max(0, Math.sin(2 * Math.PI * (t % cycle) / cycle));
         const target = 40 + a * 80;
-        const rate = 0.15;
         const speed = (1 / rate) * (target * D2R - j2.getAngle())
-        j2.getLimitMotor().setMotor(speed, 1.0);
+        j2.getLimitMotor().setMotor(speed, torque);
       };
 
-      const c3 = new OIMO.RevoluteJointConfig();
-      c3.init(
-        box2.oimo_rigid_body,
-        foot.oimo_rigid_body,
-        new OIMO.Vec3(
-          box2.position.x / OIMO_THREE.SCALE,
-          ((box2.position.y - box2.geometry.parameters.height / 2) + (foot.position.y + r)) / 2 / OIMO_THREE.SCALE,
-          box2.position.z / OIMO_THREE.SCALE
-        ),
-        new OIMO.Vec3(0, 0, 1)
-      );
-      c3.limitMotor.setLimits(0 * D2R, 0 * D2R)
-      c3.springDamper.setSpring(0, 0);
-      const j3 = new OIMO.RevoluteJoint(c3);
-      oimo_world.addJoint(j3);
+      if(true){
+        const c3 = new OIMO.RevoluteJointConfig();
+        c3.init(
+          box2.oimo_rigid_body,
+          foot.oimo_rigid_body,
+          new OIMO.Vec3(
+            box2.position.x / OIMO_THREE.SCALE,
+            ((box2.position.y - box2.geometry.parameters.height / 2) + (foot.position.y + r)) / 2 / OIMO_THREE.SCALE,
+            box2.position.z / OIMO_THREE.SCALE
+          ),
+          new OIMO.Vec3(0, 0, 1)
+        );
+        c3.limitMotor.setLimits(0 * D2R, 0 * D2R)
+        c3.springDamper.setSpring(0, 0);
+        //c3.limitMotor.setLimits(-60 * D2R, 0 * D2R)
+        //c3.springDamper.setSpring(frequency, dampingRatio);
+        const j3 = new OIMO.RevoluteJoint(c3);
+        oimo_world.addJoint(j3);
+      }else{
+        const c3 = new OIMO.PrismaticJointConfig();
+        c3.init(
+          box2.oimo_rigid_body,
+          foot.oimo_rigid_body,
+          new OIMO.Vec3(
+            box2.position.x / OIMO_THREE.SCALE,
+            ((box2.position.y - box2.geometry.parameters.height / 2) + (foot.position.y + r)) / 2 / OIMO_THREE.SCALE,
+            box2.position.z / OIMO_THREE.SCALE
+          ),
+          new OIMO.Vec3(0, 1, 0)
+        );
+        c3.limitMotor.setLimits(0, 0)
+        c3.springDamper.setSpring(0, 0);
+        const j3 = new OIMO.PrismaticJoint(c3);
+        oimo_world.addJoint(j3);
+      }
     }
 
-    makeLeg(body, 95, 45, true, false);
-    makeLeg(body, 95, -45, true, true);
-    makeLeg(body, -95, 45, false, false);
-    makeLeg(body, -95, -45, false, true);
+    makeLeg(body, x+95, z+45, true, false);
+    makeLeg(body, x+95, z-45, true, true);
+    makeLeg(body, x-95, z+45, false, false);
+    makeLeg(body, x-95, z-45, false, true);
   }
 }
